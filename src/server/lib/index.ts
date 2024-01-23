@@ -24,11 +24,11 @@ export const getTripUpdate = async () => {
 };
 
 const stopSchema = z.object({
-  stop_id: zcsv.string(z.string().optional()),
+  stop_id: zcsv.string(),
   stop_code: zcsv.string(z.string().optional()),
   stop_name: zcsv.string(z.string().optional()),
-  stop_lat: zcsv.string(z.string().optional()),
-  stop_lon: zcsv.string(z.string().optional()),
+  stop_lat: zcsv.number(),
+  stop_lon: zcsv.number(),
   location_type: zcsv.string(z.string().optional()),
   parent_station: zcsv.string(z.string().optional()),
   wheelchair_boarding: zcsv.string(z.string().optional()),
@@ -40,9 +40,9 @@ export const getStops = async () => {
   const input = await readFile("./data/ASTUCE/stops.csv", "utf-8");
   const result = parseCSVContent(input, stopSchema);
 
-  if (!result.success) {
-    throw result.errors;
-  }
+  // if (!result.success) {
+  //   throw result.errors;
+  // }
 
   return result.validRows;
 };
@@ -64,20 +64,20 @@ export const getTrips = async () => {
   const input = await readFile("./data/ASTUCE/trips.csv", "utf-8");
   const result = parseCSVContent(input, tripSchema);
 
-  if (!result.success) {
-    throw result.errors;
-  }
+  // if (!result.success) {
+  //   throw result.errors;
+  // }
 
   return result.validRows;
 };
 
-const main = async () => {
-  try {
-    const stops = await getStops();
-    console.log(stops);
-  } catch (e) {
-    console.error(e);
-  }
-};
+// const main = async () => {
+//   try {
+//     const stops = await getStops();
+//     console.log(stops);
+//   } catch (e) {
+//     console.error(e);
+//   }
+// };
 
-void main();
+// void main();
