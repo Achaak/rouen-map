@@ -1,67 +1,143 @@
-import { unstable_noStore as noStore } from "next/cache";
-import Link from "next/link";
+"use client";
 
-import { CreatePost } from "~/app/_components/create-post";
-import { api } from "~/trpc/server";
+import Map, {
+  Popup,
+  NavigationControl,
+  GeolocateControl,
+  Marker,
+  type MapRef,
+  FullscreenControl,
+  ScaleControl,
+  type ViewState,
+} from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { FaBus, FaRegCircle } from "react-icons/fa";
+import { useMemo, useRef, useState } from "react";
+import { api } from "~/trpc/react";
 
-export default async function Home() {
-  noStore();
-  const hello = await api.post.hello.query({ text: "from tRPC" });
+export default function Home() {
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+  const [selectedBusId, setSelectedBusId] = useState<string>();
+  const mapRef = useRef<MapRef>(null);
+  const { data: buses } = api.realtime.vehiclePosition.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
+  const { data: stops } = api.realtime.allStops.useQuery();
+  const [viewState, setViewState] = useState<ViewState>();
+
+  const selectedBus = buses?.entity.find((bus) => bus.id === selectedBusId);
+
+  const filteredBuses = useMemo(() => {
+    console.log("viewState");
+    if (!buses) return [];
+    return buses.entity.filter((bus) => {
+      if (!bus.vehicle?.position?.latitude || !bus.vehicle?.position?.longitude)
+        return false;
+      return checkIfPositionInViewport(
+        bus.vehicle.position.latitude,
+        bus.vehicle.position.longitude,
+      );
+    });
+  }, [buses, viewState]);
+
+  const mergedBuses = useMemo(() => {
+    if (!buses) return [];
+  }, [buses, stops]);
+
+  const filteredStops = useMemo(() => {
+    if (!stops) return [];
+    return stops.filter((stop) => {
+      if (!stop.stop_lat || !stop.stop_lon) return false;
+      return checkIfPositionInViewport(
+        Number(stop.stop_lat),
+        Number(stop.stop_lon),
+      );
+    });
+  }, [stops, viewState]);
+
+  const checkIfPositionInViewport = (lat: number, lng: number) => {
+    if (!mapRef.current) return false;
+
+    const bounds = mapRef.current.getBounds();
+    return bounds.contains([lng, lat]);
+  };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-          Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-        </h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-            href="https://create.t3.gg/en/usage/first-steps"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">First Steps →</h3>
-            <div className="text-lg">
-              Just the basics - Everything you need to know to set up your
-              database and authentication.
-            </div>
-          </Link>
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-            href="https://create.t3.gg/en/introduction"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">Documentation →</h3>
-            <div className="text-lg">
-              Learn more about Create T3 App, the libraries it uses, and how to
-              deploy it.
-            </div>
-          </Link>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-2xl text-white">
-            {hello ? hello.greeting : "Loading tRPC query..."}
-          </p>
-        </div>
+    <main className="absolute inset-0">
+      <Map
+        ref={mapRef}
+        mapboxAccessToken={mapboxToken}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
+        style={{}}
+        initialViewState={{
+          latitude: 49.433331,
+          longitude: 1.08333,
+          zoom: 13,
+        }}
+        maxZoom={20}
+        minZoom={3}
+        onDragEnd={(e) => {
+          setViewState(e.viewState);
+        }}
+        onZoomEnd={(e) => {
+          setViewState(e.viewState);
+        }}
+      >
+        <GeolocateControl position="top-left" />
+        <FullscreenControl position="top-left" />
+        <NavigationControl position="top-left" />
+        <ScaleControl />
 
-        <CrudShowcase />
-      </div>
+        {filteredBuses.map((bus) => (
+          <Marker
+            key={bus.id}
+            latitude={bus.vehicle!.position!.latitude}
+            longitude={bus.vehicle!.position!.longitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedBusId(bus.id);
+            }}
+            style={{
+              cursor: "pointer",
+              transition: "transform 0.2s",
+            }}
+          >
+            <FaBus className="h-6 w-6" />
+          </Marker>
+        ))}
+
+        {filteredStops.map((stop) => (
+          <Marker
+            key={stop.stop_id}
+            latitude={Number(stop.stop_lat)}
+            longitude={Number(stop.stop_lon)}
+            style={{
+              cursor: "pointer",
+              transition: "transform 0.2s",
+            }}
+          >
+            <FaRegCircle className="h-4 w-4" />
+          </Marker>
+        ))}
+
+        {selectedBus?.vehicle?.position?.latitude &&
+          selectedBus?.vehicle?.position?.longitude && (
+            <Popup
+              anchor="top"
+              offset={25}
+              latitude={selectedBus.vehicle?.position?.latitude}
+              longitude={selectedBus.vehicle?.position?.longitude}
+              onClose={() => setSelectedBusId(undefined)}
+              closeButton={false}
+            >
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-bold">Bus {selectedBus.id}</h1>
+                <p>Latitude: {selectedBus.vehicle?.position?.latitude}</p>
+                <p>Longitude: {selectedBus.vehicle?.position?.longitude}</p>
+              </div>
+            </Popup>
+          )}
+      </Map>
     </main>
-  );
-}
-
-async function CrudShowcase() {
-  const latestPost = await api.post.getLatest.query();
-
-  return (
-    <div className="w-full max-w-xs">
-      {latestPost ? (
-        <p className="truncate">Your most recent post: {latestPost.name}</p>
-      ) : (
-        <p>You have no posts yet.</p>
-      )}
-
-      <CreatePost />
-    </div>
   );
 }

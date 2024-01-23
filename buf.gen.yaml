@@ -1,0 +1,10 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  - plugin: buf.build/community/stephenh-ts-proto:v1.166.4
+    out: ./src/server/lib/gen/ts
+    opt:
+      - forceLong=bigint
+      - esModuleInterop=true
+      - env=node
