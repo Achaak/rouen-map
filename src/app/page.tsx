@@ -1,6 +1,6 @@
 "use client";
 
-import Map, {
+import {
   Popup,
   NavigationControl,
   GeolocateControl,
@@ -15,11 +15,21 @@ import { FaBus, FaRegCircle } from "react-icons/fa";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import useSupercluster from "use-supercluster";
+import { useBuses } from "./_hooks/useBuses";
+import { Map } from "./_components/Map";
 
-const initialViewState: Partial<ViewState> = {
+const initialViewState: ViewState = {
   latitude: 49.433331,
   longitude: 1.08333,
   zoom: 13,
+  bearing: 0,
+  pitch: 0,
+  padding: {
+    top: 50,
+    bottom: 50,
+    left: 50,
+    right: 50,
+  },
 };
 
 export default function Home() {
@@ -27,19 +37,15 @@ export default function Home() {
   const [selectedBusId, setSelectedBusId] = useState<string>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
   const mapRef = useRef<MapRef>(null);
-  const { data: buses } = api.realtime.vehiclePosition.useQuery(undefined, {
-    refetchInterval: 10000,
-  });
   const { data: stops } = api.realtime.allStops.useQuery();
-  const [viewState, setViewState] =
-    useState<Partial<ViewState>>(initialViewState);
+  const [viewState, setViewState] = useState<ViewState>(initialViewState);
+  const { busClusters, selectedBus } = useBuses({ selectedBusId, viewState });
 
-  const selectedBus = buses?.entity.find((bus) => bus.id === selectedBusId);
   const selectedStop = stops?.find((stop) => stop.stop_id === selectedStopId);
 
   const checkIfPositionInViewport = useCallback(
     (lat: number, lng: number) => {
-      if (!mapRef.current) return false;
+      if (!mapRef.current) return;
 
       const bounds = mapRef.current.getBounds();
       return bounds.contains([lng, lat]);
@@ -47,37 +53,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [mapRef.current],
   );
-
-  const filteredBuses = useMemo(() => {
-    console.log("viewState");
-    if (!buses) return [];
-    return buses.entity.filter((bus) => {
-      if (!bus.vehicle?.position?.latitude || !bus.vehicle?.position?.longitude)
-        return false;
-      return checkIfPositionInViewport(
-        bus.vehicle.position.latitude,
-        bus.vehicle.position.longitude,
-      );
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buses, viewState, checkIfPositionInViewport]);
-
-  const { clusters: busClusters } = useSupercluster({
-    points: filteredBuses.map((bus) => ({
-      type: "Feature",
-      properties: { cluster: false, busId: bus.id },
-      geometry: {
-        type: "Point",
-        coordinates: [
-          bus.vehicle!.position!.longitude,
-          bus.vehicle!.position!.latitude,
-        ],
-      },
-    })),
-    bounds: [-180, -85, 180, 85],
-    zoom: viewState?.zoom ?? 0,
-    options: { radius: 60, maxZoom: 16 },
-  });
 
   const filteredStops = useMemo(() => {
     if (!stops) return [];
@@ -98,24 +73,21 @@ export default function Home() {
       },
     })),
     bounds: [-180, -85, 180, 85],
-    zoom: viewState?.zoom ?? 0,
+    zoom: viewState.zoom,
     options: { radius: 60, maxZoom: 16 },
   });
 
   return (
     <main className="absolute inset-0">
-      <Map
+      <Map />
+      {/* <Map
         ref={mapRef}
         mapboxAccessToken={mapboxToken}
         mapStyle="mapbox://styles/mapbox/streets-v12"
-        style={{}}
         initialViewState={initialViewState}
         maxZoom={20}
         minZoom={3}
-        onDragEnd={(e) => {
-          setViewState(e.viewState);
-        }}
-        onZoomEnd={(e) => {
+        onMoveEnd={(e) => {
           setViewState(e.viewState);
         }}
       >
@@ -124,56 +96,7 @@ export default function Home() {
         <NavigationControl position="top-left" />
         <ScaleControl />
 
-        {busClusters.map((point) => {
-          const properties = point.properties || {};
-          const geometry = point.geometry;
 
-          if (properties.cluster)
-            return (
-              <Marker
-                key={point.id}
-                latitude={geometry.coordinates[1] ?? 0}
-                longitude={geometry.coordinates[0] ?? 0}
-                onClick={(e) => {
-                  e.originalEvent.stopPropagation();
-                  mapRef.current?.flyTo({
-                    center: [
-                      geometry.coordinates[0] ?? 0,
-                      geometry.coordinates[1] ?? 0,
-                    ],
-                    zoom: (viewState?.zoom ?? 0) * 1.2,
-                  });
-                }}
-                style={{
-                  cursor: "pointer",
-                  // transition: "transform 0.2s",
-                }}
-              >
-                <FaBus className="h-6 w-6" />
-                <div className="absolute -right-2 -top-2 rounded-full bg-blue-500 px-1 text-xs text-white">
-                  {properties.point_count}
-                </div>
-              </Marker>
-            );
-
-          return (
-            <Marker
-              key={properties.busId}
-              latitude={geometry.coordinates[1] ?? 0}
-              longitude={geometry.coordinates[0] ?? 0}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                setSelectedBusId(properties.busId);
-              }}
-              style={{
-                cursor: "pointer",
-                // transition: "transform 0.2s",
-              }}
-            >
-              <FaBus className="h-6 w-6" />
-            </Marker>
-          );
-        })}
 
         {stopClusters.map((point) => {
           const properties = point.properties;
@@ -262,7 +185,7 @@ export default function Home() {
             </div>
           </Popup>
         )}
-      </Map>
+      </Map> */}
     </main>
   );
 }
