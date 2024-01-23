@@ -24,14 +24,14 @@ export const getTripUpdate = async () => {
 };
 
 const stopSchema = z.object({
-  stop_id: zcsv.string().optional(),
-  stop_code: zcsv.string().optional(),
-  stop_name: zcsv.string().optional(),
-  stop_lat: zcsv.string().optional(),
-  stop_lon: zcsv.string().optional(),
-  location_type: zcsv.string().optional(),
-  parent_station: zcsv.string().optional(),
-  wheelchair_boarding: zcsv.string().optional(),
+  stop_id: zcsv.string(z.string().optional()),
+  stop_code: zcsv.string(z.string().optional()),
+  stop_name: zcsv.string(z.string().optional()),
+  stop_lat: zcsv.string(z.string().optional()),
+  stop_lon: zcsv.string(z.string().optional()),
+  location_type: zcsv.string(z.string().optional()),
+  parent_station: zcsv.string(z.string().optional()),
+  wheelchair_boarding: zcsv.string(z.string().optional()),
 });
 
 export type Stop = z.infer<typeof stopSchema>;
@@ -48,14 +48,14 @@ export const getStops = async () => {
 };
 
 const tripSchema = z.object({
-  route_id: zcsv.string().optional(),
-  service_id: zcsv.string().optional(),
-  trip_id: zcsv.string().optional(),
-  trip_headsign: zcsv.string().optional(),
-  direction_id: zcsv.string().optional(),
-  block_id: zcsv.string().optional(),
-  wheelchair_accessible: zcsv.string().optional(),
-  bikes_allowed: zcsv.string().optional(),
+  route_id: zcsv.string(z.string().optional()),
+  service_id: zcsv.string(z.string().optional()),
+  trip_id: zcsv.string(z.string().optional()),
+  trip_headsign: zcsv.string(z.string().optional()),
+  direction_id: zcsv.string(z.string().optional()),
+  block_id: zcsv.string(z.string().optional()),
+  wheelchair_accessible: zcsv.string(z.string().optional()),
+  bikes_allowed: zcsv.string(z.string().optional()),
 });
 
 export type Trip = z.infer<typeof tripSchema>;
