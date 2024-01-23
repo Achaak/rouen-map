@@ -14,6 +14,7 @@ import { api } from "~/trpc/react";
 import type { RouterOutput } from "~/server/api/root";
 import { BusMarkers } from "./BusMarkers";
 import { StopMarkers } from "./StopMarkers";
+import { LineLayers } from "./LineLayers";
 
 const initialViewState: ViewState = {
   latitude: 49.433331,
@@ -39,12 +40,19 @@ const MapContext = createContext<{
   selectedStop?: RouterOutput["realtime"]["allStops"][number];
   selectedStopId?: string;
   setSelectedStopId: (stopId?: string) => void;
+  lines?: RouterOutput["realtime"]["lines"];
+  selectedLine?: RouterOutput["realtime"]["lines"][number];
+  selectedLineId?: string;
+  setSelectedLineId: (lineId?: string) => void;
 }>({
   viewState: initialViewState,
   setSelectedBusId: () => {
     // do nothing
   },
   setSelectedStopId: () => {
+    // do nothing
+  },
+  setSelectedLineId: () => {
     // do nothing
   },
 });
@@ -55,15 +63,18 @@ export const Map = () => {
 
   const [selectedBusId, setSelectedBusId] = useState<string>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
+  const [selectedLineId, setSelectedLineId] = useState<string>();
 
   const { data: busesData } = api.realtime.vehiclePosition.useQuery(undefined, {
     refetchInterval: 10000,
   });
   const buses = busesData?.entity;
   const { data: stops } = api.realtime.allStops.useQuery();
+  const { data: lines } = api.realtime.lines.useQuery();
 
   const selectedBus = buses?.find((bus) => bus.id === selectedBusId);
   const selectedStop = stops?.find((stop) => stop.stop_id === selectedStopId);
+  const selectedLine = lines?.find((line) => line.id === selectedLineId);
 
   return (
     <MapContext.Provider
@@ -77,6 +88,10 @@ export const Map = () => {
         buses,
         stops,
         selectedStop,
+        selectedLine,
+        selectedLineId,
+        setSelectedLineId,
+        lines,
       }}
     >
       <MapGl
@@ -95,6 +110,7 @@ export const Map = () => {
 
         <BusMarkers />
         <StopMarkers />
+        <LineLayers />
 
         <ScaleControl />
       </MapGl>
