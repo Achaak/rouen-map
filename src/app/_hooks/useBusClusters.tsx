@@ -1,36 +1,26 @@
 import { useMemo } from "react";
-import { type ViewState, useMap } from "react-map-gl";
+import { useMap } from "react-map-gl";
 import useSupercluster from "use-supercluster";
-import { api } from "~/trpc/react";
+import { useMapContext } from "../_components/Map";
 
-export const useBuses = ({
-  selectedBusId,
-  viewState,
-}: {
-  selectedBusId?: string;
-  viewState: ViewState;
-}) => {
+export const useBusClusters = () => {
+  const { viewState, buses } = useMapContext();
   const { current: mapRef } = useMap();
-  const { data: buses } = api.realtime.vehiclePosition.useQuery(undefined, {
-    refetchInterval: 10000,
-  });
 
-  const selectedBus = buses?.entity.find((bus) => bus.id === selectedBusId);
-
-  console.log(mapRef);
   const filteredBuses = useMemo(() => {
     if (!buses || !mapRef) return [];
 
-    return buses.entity.filter((bus) => {
+    return buses.filter((bus) => {
       if (!bus.vehicle?.position?.latitude || !bus.vehicle?.position?.longitude)
         return false;
       const bounds = mapRef.getBounds();
       return bounds.contains([
-        bus.vehicle.position.latitude,
         bus.vehicle.position.longitude,
+        bus.vehicle.position.latitude,
       ]);
     });
-  }, [buses, mapRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buses, mapRef, viewState]);
 
   const { clusters: busClusters } = useSupercluster({
     points: filteredBuses.map((bus) => ({
@@ -50,8 +40,6 @@ export const useBuses = ({
   });
 
   return {
-    selectedBus,
-    buses,
     busClusters,
   };
 };

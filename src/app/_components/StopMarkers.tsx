@@ -1,20 +1,20 @@
 "use client";
 
-import { useBusClusters } from "../_hooks/useBusClusters";
 import { Marker, Popup, useMap } from "react-map-gl";
-import { FaBus } from "react-icons/fa";
+import { FaRegCircle } from "react-icons/fa";
 import { useMapContext } from "./Map";
+import { useStopClusters } from "../_hooks/useStopClusters";
 import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
 
-export const BusMarkers: FC = () => {
+export const StopMarkers: FC = () => {
   const { current: mapRef } = useMap();
-  const { viewState, setSelectedBusId, selectedBus } = useMapContext();
-  const { busClusters } = useBusClusters();
+  const { viewState, selectedStop, setSelectedStopId } = useMapContext();
+  const { stopClusters } = useStopClusters();
 
   return (
     <>
-      {busClusters
+      {stopClusters
         .filter((p) => p.properties.cluster)
         .map((point) => {
           const properties = point.properties as ClusterProperties;
@@ -40,7 +40,7 @@ export const BusMarkers: FC = () => {
                 // transition: "transform 0.2s",
               }}
             >
-              <FaBus className="h-6 w-6" />
+              <FaRegCircle className="h-6 w-6" />
               <div className="absolute -right-2 -top-2 rounded-full bg-blue-500 px-1 text-xs text-white">
                 {properties.point_count}
               </div>
@@ -48,7 +48,7 @@ export const BusMarkers: FC = () => {
           );
         })}
 
-      {busClusters
+      {stopClusters
         .filter((p) => !p.properties.cluster)
         .map((point) => {
           const properties = point.properties;
@@ -58,40 +58,39 @@ export const BusMarkers: FC = () => {
 
           return (
             <Marker
-              key={properties.busId}
+              key={properties.stopId}
               latitude={geometry.coordinates[1] ?? 0}
               longitude={geometry.coordinates[0] ?? 0}
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
-                setSelectedBusId(properties.busId);
+                setSelectedStopId(properties.stopId);
               }}
               style={{
                 cursor: "pointer",
                 // transition: "transform 0.2s",
               }}
             >
-              <FaBus className="h-6 w-6" />
+              <FaRegCircle className="h-6 w-6" />
             </Marker>
           );
         })}
 
-      {selectedBus?.vehicle?.position?.latitude &&
-        selectedBus?.vehicle?.position?.longitude && (
-          <Popup
-            anchor="top"
-            offset={25}
-            latitude={selectedBus.vehicle?.position?.latitude}
-            longitude={selectedBus.vehicle?.position?.longitude}
-            onClose={() => setSelectedBusId(undefined)}
-            closeButton={false}
-          >
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-bold">Bus {selectedBus.id}</h1>
-              <p>Latitude: {selectedBus.vehicle?.position?.latitude}</p>
-              <p>Longitude: {selectedBus.vehicle?.position?.longitude}</p>
-            </div>
-          </Popup>
-        )}
+      {selectedStop?.stop_lat && selectedStop?.stop_lon && (
+        <Popup
+          anchor="top"
+          offset={25}
+          latitude={selectedStop.stop_lat}
+          longitude={selectedStop.stop_lon}
+          onClose={() => setSelectedStopId(undefined)}
+          closeButton={false}
+        >
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold">Stop {selectedStop.stop_id}</h1>
+            <p>Latitude: {selectedStop.stop_lat}</p>
+            <p>Longitude: {selectedStop.stop_lon}</p>
+          </div>
+        </Popup>
+      )}
     </>
   );
 };
