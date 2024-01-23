@@ -15,6 +15,7 @@ import type { RouterOutput } from "~/server/api/root";
 import { BusMarkers } from "./BusMarkers";
 import { StopMarkers } from "./StopMarkers";
 import { LineLayers } from "./LineLayers";
+import { ControlPanel } from "./ControlPanel";
 
 const initialViewState: ViewState = {
   latitude: 49.433331,
@@ -66,7 +67,7 @@ export const Map = () => {
   const [selectedLineId, setSelectedLineId] = useState<string>();
 
   const { data: busesData } = api.realtime.vehiclePosition.useQuery(undefined, {
-    refetchInterval: 10000,
+    refetchInterval: 20000,
   });
   const buses = busesData?.entity;
   const { data: stops } = api.realtime.allStops.useQuery();
@@ -99,7 +100,7 @@ export const Map = () => {
         mapStyle="mapbox://styles/mapbox/streets-v12"
         initialViewState={initialViewState}
         maxZoom={20}
-        minZoom={3}
+        minZoom={1}
         onMoveEnd={(e) => {
           setViewState(e.viewState);
         }}
@@ -114,6 +115,7 @@ export const Map = () => {
 
         <ScaleControl />
       </MapGl>
+      <ControlPanel />
     </MapContext.Provider>
   );
 };

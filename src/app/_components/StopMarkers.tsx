@@ -1,16 +1,33 @@
 "use client";
 
 import { Marker, Popup, useMap } from "react-map-gl";
-import { FaRegCircle } from "react-icons/fa";
 import { useMapContext } from "./Map";
 import { useStopClusters } from "../_hooks/useStopClusters";
 import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
+import { cn } from "~/lib/utils";
+import { BusStopIcon } from "~/components/icons/BusStop";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { useShowStops } from "../_hooks/useShowStops";
+import { WheelchairIcon } from "~/components/icons/Wheelchair";
+import { Separator } from "~/components/ui/separator";
+
+const stopContainerClass = cn(
+  "bg-card border-border rounded-full border p-1.5 shadow-md relative",
+);
 
 export const StopMarkers: FC = () => {
   const { current: mapRef } = useMap();
   const { viewState, selectedStop, setSelectedStopId } = useMapContext();
   const { stopClusters } = useStopClusters();
+  const { showStops } = useShowStops();
+
+  if (!showStops) return null;
 
   return (
     <>
@@ -40,9 +57,11 @@ export const StopMarkers: FC = () => {
                 // transition: "transform 0.2s",
               }}
             >
-              <FaRegCircle className="h-6 w-6" />
-              <div className="absolute -right-2 -top-2 rounded-full bg-blue-500 px-1 text-xs text-white">
-                {properties.point_count}
+              <div className={stopContainerClass}>
+                <BusStopIcon className="text-foreground h-6 w-6" />
+                <div className="bg-primary absolute -right-2 -top-2 rounded-full px-1.5 py-0.5 text-xs text-white">
+                  {properties.point_count}
+                </div>
               </div>
             </Marker>
           );
@@ -70,7 +89,12 @@ export const StopMarkers: FC = () => {
                 // transition: "transform 0.2s",
               }}
             >
-              <FaRegCircle className="h-6 w-6" />
+              <div className={stopContainerClass}>
+                <BusStopIcon className="text-foreground h-6 w-6" />
+                {properties.wheelchairBoarding && (
+                  <WheelchairIcon className="bg-primary absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full p-0.5 text-white" />
+                )}
+              </div>
             </Marker>
           );
         })}
@@ -84,11 +108,20 @@ export const StopMarkers: FC = () => {
           onClose={() => setSelectedStopId(undefined)}
           closeButton={false}
         >
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-bold">Stop {selectedStop.stop_id}</h1>
+          <CardHeader>
+            <CardTitle>{selectedStop.stop_name}</CardTitle>
+            <CardDescription>Code: {selectedStop.stop_code}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Embarquement en fauteuil roulant :{" "}
+              {selectedStop.wheelchair_boarding ? "Oui" : "Non"}
+            </p>
+            <Separator className="my-2" />
+
             <p>Latitude: {selectedStop.stop_lat}</p>
             <p>Longitude: {selectedStop.stop_lon}</p>
-          </div>
+          </CardContent>
         </Popup>
       )}
     </>

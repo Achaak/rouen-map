@@ -2,15 +2,30 @@
 
 import { useBusClusters } from "../_hooks/useBusClusters";
 import { Marker, Popup, useMap } from "react-map-gl";
-import { FaBus } from "react-icons/fa";
 import { useMapContext } from "./Map";
 import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
+import { cn } from "~/lib/utils";
+import { BusIcon } from "~/components/icons/Bus";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { useShowBuses } from "../_hooks/useShowBuses";
+
+const busContainerClass = cn(
+  "bg-card border-border rounded-full border p-2 shadow-md relative",
+);
 
 export const BusMarkers: FC = () => {
   const { current: mapRef } = useMap();
   const { viewState, setSelectedBusId, selectedBus } = useMapContext();
   const { busClusters } = useBusClusters();
+  const { showBuses } = useShowBuses();
+
+  if (!showBuses) return null;
 
   return (
     <>
@@ -37,12 +52,13 @@ export const BusMarkers: FC = () => {
               }}
               style={{
                 cursor: "pointer",
-                // transition: "transform 0.2s",
               }}
             >
-              <FaBus className="h-6 w-6" />
-              <div className="absolute -right-2 -top-2 rounded-full bg-blue-500 px-1 text-xs text-white">
-                {properties.point_count}
+              <div className={busContainerClass}>
+                <BusIcon className="text-foreground h-6 w-6" />
+                <div className="bg-primary absolute -right-2 -top-2 rounded-full px-1.5 py-0.5 text-xs text-white">
+                  {properties.point_count}
+                </div>
               </div>
             </Marker>
           );
@@ -67,10 +83,11 @@ export const BusMarkers: FC = () => {
               }}
               style={{
                 cursor: "pointer",
-                // transition: "transform 0.2s",
               }}
             >
-              <FaBus className="h-6 w-6" />
+              <div className={busContainerClass}>
+                <BusIcon className="text-foreground h-6 w-6" />
+              </div>
             </Marker>
           );
         })}
@@ -85,11 +102,14 @@ export const BusMarkers: FC = () => {
             onClose={() => setSelectedBusId(undefined)}
             closeButton={false}
           >
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-bold">Bus {selectedBus.id}</h1>
+            <CardHeader>
+              <CardTitle>Bus</CardTitle>
+              <CardDescription>{selectedBus.id}</CardDescription>
+            </CardHeader>
+            <CardContent>
               <p>Latitude: {selectedBus.vehicle?.position?.latitude}</p>
               <p>Longitude: {selectedBus.vehicle?.position?.longitude}</p>
-            </div>
+            </CardContent>
           </Popup>
         )}
     </>

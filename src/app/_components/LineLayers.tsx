@@ -4,19 +4,19 @@ import { Layer, Popup, Source } from "react-map-gl";
 import { useMapContext } from "./Map";
 import type { FC } from "react";
 import { useLines } from "../_hooks/useLines";
+import { useShowLines } from "../_hooks/useShowLines";
 
 export const LineLayers: FC = () => {
   const { setSelectedLineId, selectedLine } = useMapContext();
   const { linesFormatted } = useLines();
+  const { showLines } = useShowLines();
+
+  if (!showLines) return null;
 
   return (
     <>
       {linesFormatted.map((line) => {
-        const properties = line.properties as {
-          lineId: string;
-          routeColor: string;
-          routeTextColor: string;
-        };
+        const properties = line.properties;
 
         return (
           <Source key={properties.lineId} type="geojson" data={line}>
@@ -28,7 +28,7 @@ export const LineLayers: FC = () => {
               }}
               paint={{
                 "line-color": `#${properties.routeColor}`,
-                "line-width": 3,
+                "line-width": 2,
               }}
               // onClick={(e) => {
               //   e.stopPropagation();
