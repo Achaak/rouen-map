@@ -2,6 +2,7 @@ import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { realtimeRouter } from "./routers/realtime";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import { staticRouter } from "./routers/static";
 
 /**
  * This is the primary router for your server.
@@ -11,6 +12,7 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   realtime: realtimeRouter,
+  static: staticRouter,
 });
 
 // export type definition of API

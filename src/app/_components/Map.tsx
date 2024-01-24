@@ -22,6 +22,8 @@ import { ControlPanel } from "./ControlPanel";
 const initialViewState: ViewState = {
   latitude: 49.433331,
   longitude: 1.08333,
+  // latitude: 50.633333,
+  // longitude: 3.066667,
   zoom: 13,
   bearing: 0,
   pitch: 0,
@@ -35,14 +37,14 @@ const initialViewState: ViewState = {
 
 const MapContext = createContext<{
   viewState: ViewState;
-  vehicles?: RouterOutput["realtime"]["getVehicles"];
+  vehicles?: RouterOutput["static"]["getVehicles"];
   selectedVehicleId?: string;
   setSelectedVehicleId: (vehiclesId?: string) => void;
-  stops?: RouterOutput["realtime"]["getStops"];
+  stops?: RouterOutput["static"]["getStops"];
   selectedStopId?: string;
   setSelectedStopId: (stopId?: string) => void;
-  lines?: RouterOutput["realtime"]["lines"];
-  trips?: RouterOutput["realtime"]["allTrips"];
+  lines?: RouterOutput["static"]["lines"];
+  trips?: RouterOutput["static"]["allTrips"];
   isOnDrag: boolean;
   isOnMove: boolean;
 }>({
@@ -67,11 +69,11 @@ export const Map = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
 
-  const { data: vehicles } = api.realtime.getVehicles.useQuery(undefined, {
+  const { data: vehicles } = api.static.getVehicles.useQuery(undefined, {
     refetchInterval: 20000,
   });
-  const { data: stops } = api.realtime.getStops.useQuery();
-  const { data: lines } = api.realtime.lines.useQuery();
+  const { data: stops } = api.static.getStops.useQuery();
+  const { data: lines } = api.static.lines.useQuery();
 
   const layers = mapRef.current?.getStyle().layers;
   const labelLayerId = layers?.find(

@@ -7,7 +7,7 @@ import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
 import { cn } from "~/lib/utils";
 import { BusStopIcon } from "~/components/icons/BusStop";
-import { CardContent, CardHeader } from "~/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useShowStops } from "../_hooks/useShowStops";
 import { WheelchairIcon } from "~/components/icons/Wheelchair";
 import { Separator } from "~/components/ui/separator";
@@ -106,8 +106,8 @@ export const StopMarkers: FC = () => {
           closeButton={false}
         >
           <CardHeader>
-            {/* <CardTitle>{selectedStop.stop_name}</CardTitle>
-            <CardDescription>Code: {selectedStop.stop_code}</CardDescription> */}
+            <CardTitle>{selectedStop.name}</CardTitle>
+            {/* <CardDescription>Code: {selectedStop.stop_code}</CardDescription> */}
           </CardHeader>
           <CardContent>
             {/* <p>
