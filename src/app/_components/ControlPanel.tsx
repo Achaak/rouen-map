@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { Card } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
@@ -15,16 +15,28 @@ import {
 } from "~/components/ui/accordion";
 import { vehiclesTypes } from "~/lib/vehicles";
 import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 export const ControlPanel: FC = () => {
   const { setShowVehicle, showVehicles } = useShowVehicles();
   const { showStops, setShowStops } = useShowStops();
   const { showLines, setShowLines } = useShowLines();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="absolute right-2.5 top-2.5 flex flex-col items-end space-y-2">
-      <Button>Open</Button>
-      <Card className="flex min-w-64 flex-col space-y-2 p-4 pt-0">
+      <Button
+        onClick={() => {
+          setIsOpen(!isOpen);
+        }}
+      >
+        Filtres
+      </Button>
+      <Card
+        className={cn("flex w-64 max-w-full flex-col space-y-2 p-4 pt-0", {
+          hidden: !isOpen,
+        })}
+      >
         <Accordion type="multiple">
           <AccordionItem value="vehicles">
             <AccordionTrigger>Type de transport</AccordionTrigger>
