@@ -3,7 +3,7 @@ import { useMapContext } from "../_components/Map";
 
 export const useVehicleSelected = () => {
   const { vehicles, selectedVehicleId } = useMapContext();
-  const { data, isLoading } = api.realtime.getVehicleInfo.useQuery(
+  const { data, isLoading } = api.static.getVehicleInfo.useQuery(
     {
       vehicleId: selectedVehicleId ?? "",
     },

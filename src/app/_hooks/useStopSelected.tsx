@@ -3,7 +3,7 @@ import { useMapContext } from "../_components/Map";
 
 export const useStopSelected = () => {
   const { stops, selectedStopId } = useMapContext();
-  const { data, isLoading } = api.realtime.getStopInfo.useQuery(
+  const { data, isLoading } = api.static.getStopInfo.useQuery(
     {
       stopId: selectedStopId ?? "",
     },
