@@ -20,7 +20,7 @@ export const getVehiclePosition = async () => {
 export const getTripUpdate = async () => {
   const data = await got.get(TRIP_UPDATE).buffer();
   const feedMessage = FeedMessage.decode(data);
-  console.dir(feedMessage.entity[0]?.tripUpdate, { depth: 10 });
+
   return feedMessage;
 };
 
@@ -93,8 +93,8 @@ const tripSchema = z.object({
   trip_headsign: z.string(),
   direction_id: z.coerce.number(),
   block_id: z.coerce.number(),
-  wheelchair_accessible:  z.coerce.boolean(),
-  bikes_allowed:  z.coerce.boolean(),
+  wheelchair_accessible: z.coerce.boolean(),
+  bikes_allowed: z.coerce.boolean(),
 });
 
 export type Trip = z.infer<typeof tripSchema>;
@@ -110,8 +110,8 @@ const routeSchema = z.object({
   route_short_name: z.string(),
   route_long_name: z.string(),
   route_type: z.coerce.number(),
-  route_color : z.string(),
-  route_text_color : z.string(),
+  route_color: z.string(),
+  route_text_color: z.string(),
   route_url: z.string(),
   route_sort_order: z.coerce.number(),
 });
@@ -154,10 +154,12 @@ const stopTimeSchema = z.object({
 export type StopTime = z.infer<typeof stopTimeSchema>;
 
 export const getStopTimes = async () => {
-  const results = await processFile(stopTimeSchema, "./data/ASTUCE/stop_times.csv");
+  const results = await processFile(
+    stopTimeSchema,
+    "./data/ASTUCE/stop_times.csv",
+  );
   return results;
 };
-
 
 // const main = async () => {
 //   try {

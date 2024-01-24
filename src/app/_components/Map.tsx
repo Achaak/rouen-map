@@ -3,16 +3,18 @@
 import {
   FullscreenControl,
   GeolocateControl,
+  Layer,
   Map as MapGl,
+  type MapRef,
   NavigationControl,
   ScaleControl,
   type ViewState,
 } from "react-map-gl";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import { env } from "~/env";
 import { api } from "~/trpc/react";
 import type { RouterOutput } from "~/server/api/root";
-import { BusMarkers } from "./BusMarkers";
+import { VehicleMarkers } from "./VehicleMarkers";
 import { StopMarkers } from "./StopMarkers";
 import { LineLayers } from "./LineLayers";
 import { ControlPanel } from "./ControlPanel";
@@ -33,83 +35,123 @@ const initialViewState: ViewState = {
 
 const MapContext = createContext<{
   viewState: ViewState;
-  buses?: RouterOutput["realtime"]["vehiclePosition"]["entity"];
-  selectedBus?: RouterOutput["realtime"]["vehiclePosition"]["entity"][number];
-  selectedBusId?: string;
-  setSelectedBusId: (busId?: string) => void;
-  stops?: RouterOutput["realtime"]["allStops"];
-  selectedStop?: RouterOutput["realtime"]["allStops"][number];
+  vehicles?: RouterOutput["realtime"]["getVehicles"];
+  selectedVehicleId?: string;
+  setSelectedVehicleId: (vehiclesId?: string) => void;
+  stops?: RouterOutput["realtime"]["getStops"];
   selectedStopId?: string;
   setSelectedStopId: (stopId?: string) => void;
   lines?: RouterOutput["realtime"]["lines"];
-  selectedLine?: RouterOutput["realtime"]["lines"][number];
-  selectedLineId?: string;
-  setSelectedLineId: (lineId?: string) => void;
+  trips?: RouterOutput["realtime"]["allTrips"];
+  isOnDrag: boolean;
+  isOnMove: boolean;
 }>({
   viewState: initialViewState,
-  setSelectedBusId: () => {
+  setSelectedVehicleId: () => {
     // do nothing
   },
   setSelectedStopId: () => {
     // do nothing
   },
-  setSelectedLineId: () => {
-    // do nothing
-  },
+  isOnDrag: false,
+  isOnMove: false,
 });
 export const useMapContext = () => useContext(MapContext);
 
 export const Map = () => {
+  const mapRef = useRef<MapRef>(null);
   const [viewState, setViewState] = useState<ViewState>(initialViewState);
+  const [isOnDrag, setIsOnDrag] = useState(false);
+  const [isOnMove, setIsOnMove] = useState(false);
 
-  const [selectedBusId, setSelectedBusId] = useState<string>();
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
-  const [selectedLineId, setSelectedLineId] = useState<string>();
 
-  const { data: busesData } = api.realtime.vehiclePosition.useQuery(undefined, {
+  const { data: vehicles } = api.realtime.getVehicles.useQuery(undefined, {
     refetchInterval: 20000,
   });
-  const buses = busesData?.entity;
-  const { data: stops } = api.realtime.allStops.useQuery();
+  const { data: stops } = api.realtime.getStops.useQuery();
   const { data: lines } = api.realtime.lines.useQuery();
 
-  const selectedBus = buses?.find((bus) => bus.id === selectedBusId);
-  const selectedStop = stops?.find((stop) => stop.stop_id === selectedStopId);
-  const selectedLine = lines?.find((line) => line.id === selectedLineId);
+  const layers = mapRef.current?.getStyle().layers;
+  const labelLayerId = layers?.find(
+    (layer) => layer.type === "symbol" && layer.layout?.["text-field"],
+  )?.id;
 
   return (
     <MapContext.Provider
       value={{
         viewState,
-        selectedBus,
-        selectedBusId,
-        setSelectedBusId,
+        selectedVehicleId,
+        setSelectedVehicleId,
         selectedStopId,
         setSelectedStopId,
-        buses,
+        vehicles,
         stops,
-        selectedStop,
-        selectedLine,
-        selectedLineId,
-        setSelectedLineId,
         lines,
+        isOnDrag,
+        isOnMove,
       }}
     >
       <MapGl
         mapboxAccessToken={env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapStyle="mapbox://styles/mapbox/light-v11"
         initialViewState={initialViewState}
         maxZoom={20}
         minZoom={1}
-        onMoveEnd={(e) => {
+        onMove={(e) => {
           setViewState(e.viewState);
         }}
+        onDragStart={() => {
+          setIsOnDrag(true);
+        }}
+        onDragEnd={() => {
+          setIsOnDrag(false);
+        }}
+        onMoveStart={() => {
+          setIsOnMove(true);
+        }}
+        onMoveEnd={() => {
+          setIsOnMove(false);
+        }}
+        ref={mapRef}
       >
+        <Layer
+          id="add-3d-buildings"
+          source="composite"
+          source-layer="building"
+          filter={["==", "extrude", "true"]}
+          type="fill-extrusion"
+          minzoom={15}
+          paint={{
+            "fill-extrusion-color": "#aaa",
+            "fill-extrusion-height": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              15,
+              0,
+              15.05,
+              ["get", "height"],
+            ],
+            "fill-extrusion-base": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              15,
+              0,
+              15.05,
+              ["get", "min_height"],
+            ],
+            "fill-extrusion-opacity": 0.6,
+          }}
+          beforeId={labelLayerId}
+        />
         <GeolocateControl position="top-left" />
         <FullscreenControl position="top-left" />
         <NavigationControl position="top-left" />
 
-        <BusMarkers />
+        <VehicleMarkers />
         <StopMarkers />
         <LineLayers />
 

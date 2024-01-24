@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   getTripUpdate,
@@ -16,9 +17,55 @@ export const realtimeRouter = createTRPCRouter({
   vehiclePosition: publicProcedure.query(() => {
     return getVehiclePosition();
   }),
+  getVehicles: publicProcedure.query(async () => {
+    const vehiclePositions = await getVehiclePosition();
+    const routes = await getRoutes();
+
+    return vehiclePositions.entity.map((vehiclePosition) => {
+      // Get the route type from the route_id
+      const route = routes?.find(
+        (r) => r.route_id === Number(vehiclePosition.vehicle?.trip?.routeId),
+      );
+
+      return {
+        id: vehiclePosition.vehicle?.vehicle?.id,
+        position: {
+          latitude: vehiclePosition.vehicle?.position?.latitude,
+          longitude: vehiclePosition.vehicle?.position?.longitude,
+          bearing: vehiclePosition.vehicle?.position?.bearing,
+        },
+        vehicleType: route?.route_type,
+        color: route?.route_color,
+      };
+    });
+  }),
   allStops: publicProcedure.query(() => {
     return getStops();
   }),
+  getStops: publicProcedure.query(async () => {
+    const stops = await getStops();
+
+    return stops.map((stop) => {
+      return {
+        id: stop.stop_id,
+        latitude: stop.stop_lat,
+        longitude: stop.stop_lon,
+        locationType: stop.location_type,
+        wheelchairBoarding: stop.wheelchair_boarding,
+      };
+    });
+  }),
+  getStop: publicProcedure
+    .input(
+      z.object({
+        stopId: z.string(),
+      }),
+    )
+    .query(async ({ input: { stopId } }) => {
+      const stops = await getStops();
+
+      return stops.find((stop) => stop.stop_id === stopId);
+    }),
   allTrips: publicProcedure.query(() => {
     return getTrips();
   }),
@@ -31,6 +78,22 @@ export const realtimeRouter = createTRPCRouter({
   allStopTimes: publicProcedure.query(() => {
     return getStopTimes();
   }),
+  getStopTimes: publicProcedure
+    .input(
+      z.object({
+        stopIds: z.string().array(),
+        tripId: z.string(),
+      }),
+    )
+    .query(async ({ input: { stopIds, tripId } }) => {
+      const stopTimes = await getStopTimes();
+
+      return stopTimes.filter(
+        (stopTime) =>
+          stopTime.trip_id === Number(tripId) &&
+          stopIds.includes(stopTime.stop_id),
+      );
+    }),
   lines: publicProcedure.query(async () => {
     const [stops, trips, routes, stopTimes] = await Promise.all([
       getStops(),

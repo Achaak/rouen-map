@@ -7,15 +7,11 @@ import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
 import { cn } from "~/lib/utils";
 import { BusStopIcon } from "~/components/icons/BusStop";
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { CardContent, CardHeader } from "~/components/ui/card";
 import { useShowStops } from "../_hooks/useShowStops";
 import { WheelchairIcon } from "~/components/icons/Wheelchair";
 import { Separator } from "~/components/ui/separator";
+import { useStopSelected } from "../_hooks/useStopSelected";
 
 const stopContainerClass = cn(
   "bg-card border-border rounded-full border p-1.5 shadow-md relative",
@@ -23,7 +19,8 @@ const stopContainerClass = cn(
 
 export const StopMarkers: FC = () => {
   const { current: mapRef } = useMap();
-  const { viewState, selectedStop, setSelectedStopId } = useMapContext();
+  const { viewState, setSelectedStopId } = useMapContext();
+  const { selectedStop } = useStopSelected();
   const { stopClusters } = useStopClusters();
   const { showStops } = useShowStops();
 
@@ -58,8 +55,8 @@ export const StopMarkers: FC = () => {
               }}
             >
               <div className={stopContainerClass}>
-                <BusStopIcon className="text-foreground h-6 w-6" />
-                <div className="bg-primary absolute -right-2 -top-2 rounded-full px-1.5 py-0.5 text-xs text-white">
+                <BusStopIcon className="h-6 w-6 text-foreground" />
+                <div className="absolute -right-2 -top-2 rounded-full bg-primary px-1.5 py-0.5 text-xs text-white">
                   {properties.point_count}
                 </div>
               </div>
@@ -77,12 +74,12 @@ export const StopMarkers: FC = () => {
 
           return (
             <Marker
-              key={properties.stopId}
+              key={properties.id}
               latitude={geometry.coordinates[1] ?? 0}
               longitude={geometry.coordinates[0] ?? 0}
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
-                setSelectedStopId(properties.stopId);
+                setSelectedStopId(properties.id);
               }}
               style={{
                 cursor: "pointer",
@@ -90,37 +87,37 @@ export const StopMarkers: FC = () => {
               }}
             >
               <div className={stopContainerClass}>
-                <BusStopIcon className="text-foreground h-6 w-6" />
+                <BusStopIcon className="h-6 w-6 text-foreground" />
                 {properties.wheelchairBoarding && (
-                  <WheelchairIcon className="bg-primary absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full p-0.5 text-white" />
+                  <WheelchairIcon className="absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary p-0.5 text-white" />
                 )}
               </div>
             </Marker>
           );
         })}
 
-      {selectedStop?.stop_lat && selectedStop?.stop_lon && (
+      {selectedStop?.latitude && selectedStop?.longitude && (
         <Popup
           anchor="top"
           offset={25}
-          latitude={selectedStop.stop_lat}
-          longitude={selectedStop.stop_lon}
+          latitude={selectedStop.latitude}
+          longitude={selectedStop.longitude}
           onClose={() => setSelectedStopId(undefined)}
           closeButton={false}
         >
           <CardHeader>
-            <CardTitle>{selectedStop.stop_name}</CardTitle>
-            <CardDescription>Code: {selectedStop.stop_code}</CardDescription>
+            {/* <CardTitle>{selectedStop.stop_name}</CardTitle>
+            <CardDescription>Code: {selectedStop.stop_code}</CardDescription> */}
           </CardHeader>
           <CardContent>
-            <p>
+            {/* <p>
               Embarquement en fauteuil roulant :{" "}
               {selectedStop.wheelchair_boarding ? "Oui" : "Non"}
-            </p>
+            </p> */}
             <Separator className="my-2" />
 
-            <p>Latitude: {selectedStop.stop_lat}</p>
-            <p>Longitude: {selectedStop.stop_lon}</p>
+            <p>Latitude: {selectedStop.latitude}</p>
+            <p>Longitude: {selectedStop.longitude}</p>
           </CardContent>
         </Popup>
       )}
