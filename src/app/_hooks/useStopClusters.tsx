@@ -18,7 +18,7 @@ export const useStopClusters = () => {
       if (!stop.latitude || !stop.longitude) return false;
 
       // Filter location_type
-      if (stop.locationType !== 0 && stop.locationType !== 1) return false;
+      if (stop.locationType !== 0) return false;
 
       const bounds = mapRef.getBounds();
       return bounds.contains([stop.longitude, stop.latitude]);

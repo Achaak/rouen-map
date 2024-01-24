@@ -10,12 +10,15 @@ import { BusIcon } from "~/components/icons/Bus";
 import {
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
 import { ArrowDownIcon } from "~/components/icons/ArrowDown";
 import { VehicleIcon } from "~/components/VehicleIcon";
 import { useVehicleSelected } from "../_hooks/useVehicleSelected";
+import { Skeleton } from "~/components/ui/skeleton";
+import { Button } from "~/components/ui/button";
 
 const vehicleContainerClass = cn(
   "bg-card border-border rounded-full border p-2 shadow-md relative",
@@ -23,9 +26,9 @@ const vehicleContainerClass = cn(
 
 export const VehicleMarkers: FC = () => {
   const { current: mapRef } = useMap();
-  const { viewState, setSelectedVehicleId, isOnDrag, isOnMove } =
-    useMapContext();
-  const { selectedVehicle } = useVehicleSelected();
+  const { viewState, setSelectedVehicleId, isOnDrag } = useMapContext();
+  const { selectedVehicle, isLoading, selectedVehicleInfo } =
+    useVehicleSelected();
 
   // const selectedBusRoute = routes?.find(
   //   (r) => r.route_id === Number(selectedBus?.vehicle?.trip?.routeId),
@@ -118,13 +121,13 @@ export const VehicleMarkers: FC = () => {
     <>
       {vehicleClusters
         .filter((v) => v.properties.cluster)
-        .map((point) => {
-          const properties = point.properties as ClusterProperties;
-          const geometry = point.geometry;
+        .map((p) => {
+          const properties = p.properties as ClusterProperties;
+          const geometry = p.geometry;
 
           return (
             <Marker
-              key={point.id}
+              key={p.id}
               latitude={geometry.coordinates[1] ?? 0}
               longitude={geometry.coordinates[0] ?? 0}
               onClick={(e) => {
@@ -153,9 +156,9 @@ export const VehicleMarkers: FC = () => {
 
       {vehicleClusters
         .filter((p) => !p.properties.cluster)
-        .map((point) => {
-          const properties = point.properties;
-          const geometry = point.geometry;
+        .map((p) => {
+          const properties = p.properties;
+          const geometry = p.geometry;
 
           if (properties.cluster) return null; // should never happen
 
@@ -170,7 +173,9 @@ export const VehicleMarkers: FC = () => {
               }}
               style={{
                 cursor: "pointer",
-                transition: isOnMove ? undefined : "transform 500ms",
+                transition: "transform 500ms",
+                // transition: isOnMove ? undefined : "transform 500ms",
+                // transitionDelay: "500ms",
               }}
             >
               <div className={vehicleContainerClass}>
@@ -213,38 +218,28 @@ export const VehicleMarkers: FC = () => {
               maxWidth: "none",
               width: "auto",
               transition: "transform 500ms",
+              // transition: isOnMove ? undefined : "transform 500ms",
+              // transitionDelay: "500ms",
             }}
           >
             <CardHeader>
-              <CardTitle className="text-lg">
-                {/* {selectedBusRoute?.route_long_name} (
-                {selectedBusRoute?.route_short_name}) */}
-              </CardTitle>
-              <CardDescription>
-                {/* Direction:{" "}
-                {
-                  selectedBusRoute?.route_long_name.split(" <> ")[
-                    selectedBus?.vehicle?.trip?.directionId === 0 ? 1 : 0
-                  ]
-                } */}
-              </CardDescription>
+              {isLoading ? (
+                <Skeleton className="h-6 w-56" />
+              ) : (
+                <CardTitle className="text-lg font-bold">
+                  {selectedVehicleInfo?.routeLongName} (
+                  {selectedVehicleInfo?.routeShortName})
+                </CardTitle>
+              )}
+              {isLoading ? (
+                <Skeleton className="h-4 w-24" />
+              ) : (
+                <CardDescription>
+                  Direction: {selectedVehicleInfo?.direction}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
-              <span
-                onClick={() => {
-                  if (isFollow) {
-                    setIsFollow(false);
-                    return;
-                  }
-
-                  setIsFollow(true);
-                  flyToFollow({
-                    zoom: 16,
-                  });
-                }}
-              >
-                {!isFollow ? "Suivre" : "Ne pas suivre"}
-              </span>
               {/* {isLoadingStopTimes ? (
                 <p>Chargement...</p>
               ) : (
@@ -259,6 +254,24 @@ export const VehicleMarkers: FC = () => {
               <p>Latitude: {selectedVehicle.position.latitude}</p>
               <p>Longitude: {selectedVehicle.position.longitude}</p>
             </CardContent>
+            <CardFooter>
+              <Button
+                size="xs"
+                onClick={() => {
+                  if (isFollow) {
+                    setIsFollow(false);
+                    return;
+                  }
+
+                  setIsFollow(true);
+                  flyToFollow({
+                    zoom: 16,
+                  });
+                }}
+              >
+                {!isFollow ? "Suivre" : "Ne pas suivre"}
+              </Button>
+            </CardFooter>
           </Popup>
         )}
     </>

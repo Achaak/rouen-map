@@ -39,6 +39,68 @@ export const realtimeRouter = createTRPCRouter({
       };
     });
   }),
+  getVehicleInfo: publicProcedure
+    .input(
+      z.object({
+        vehicleId: z.string(),
+      }),
+    )
+    .query(async ({ input: { vehicleId } }) => {
+      const vehiclePositions = await getVehiclePosition();
+      const routes = await getRoutes();
+      // const stops = await getStops();
+      // const stopTimes = await getStopTimes();
+      // const tripUpdate = await getTripUpdate();
+
+      // Get the vehicle position from the vehicle_id
+      const vehiclePosition = vehiclePositions.entity.find(
+        (vehiclePosition) => vehiclePosition.vehicle?.vehicle?.id === vehicleId,
+      );
+
+      if (!vehiclePosition) {
+        return null;
+      }
+
+      // Get the route type from the route_id
+      const route = routes?.find(
+        (r) => r.route_id === Number(vehiclePosition.vehicle?.trip?.routeId),
+      );
+
+      // const tripUpdate = stopTimes.map((st) => {
+      //   vehiclePosition?.tripUpdate?.stopTimeUpdate?.find(
+      //     (stu) => stu.stopId === st.stop_id,
+      //   );
+      // });
+
+      // const selectedBusStopTime: {
+      //   stop_name: string;
+      // }[] = [];
+      // vehiclePosition?.tripUpdate?.stopTimeUpdate?.forEach((stu) => {
+      //   const stop = stops?.find((s) => s.stop_id === stu.stopId);
+
+      //   if (!stop) return;
+
+      //   const stopTime = stopTimes?.find((t) => t.stop_id === stop.stop_id);
+      //   console.log(stopTime, stopTimes?.length);
+
+      //   if (!stopTime) return;
+
+      //   selectedBusStopTime.push({
+      //     stop_name: stop.stop_name,
+      //   });
+      // });
+
+      // console.log(selectedBusStopTime);
+      return {
+        routeShortName: route?.route_short_name,
+        routeLongName: route?.route_long_name,
+        direction:
+          route?.route_long_name.split(" <> ")[
+            vehiclePosition.vehicle?.trip?.directionId === 0 ? 1 : 0
+          ],
+        // stopTime: selectedBusStopTime,
+      };
+    }),
   allStops: publicProcedure.query(() => {
     return getStops();
   }),
@@ -55,7 +117,7 @@ export const realtimeRouter = createTRPCRouter({
       };
     });
   }),
-  getStop: publicProcedure
+  getStopInfo: publicProcedure
     .input(
       z.object({
         stopId: z.string(),
@@ -64,7 +126,16 @@ export const realtimeRouter = createTRPCRouter({
     .query(async ({ input: { stopId } }) => {
       const stops = await getStops();
 
-      return stops.find((stop) => stop.stop_id === stopId);
+      // Get the stop from the stop_id
+      const stop = stops.find((stop) => stop.stop_id === stopId);
+
+      if (!stop) {
+        return null;
+      }
+
+      return {
+        name: stop?.stop_name,
+      };
     }),
   allTrips: publicProcedure.query(() => {
     return getTrips();

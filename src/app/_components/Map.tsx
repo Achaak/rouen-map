@@ -63,6 +63,7 @@ export const Map = () => {
   const [viewState, setViewState] = useState<ViewState>(initialViewState);
   const [isOnDrag, setIsOnDrag] = useState(false);
   const [isOnMove, setIsOnMove] = useState(false);
+  const [layerId, setLayerId] = useState<string>();
 
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>();
   const [selectedStopId, setSelectedStopId] = useState<string>();
@@ -72,11 +73,6 @@ export const Map = () => {
   });
   const { data: stops } = api.realtime.getStops.useQuery();
   const { data: lines } = api.realtime.lines.useQuery();
-
-  const layers = mapRef.current?.getStyle().layers;
-  const labelLayerId = layers?.find(
-    (layer) => layer.type === "symbol" && layer.layout?.["text-field"],
-  )?.id;
 
   return (
     <MapContext.Provider
@@ -99,6 +95,13 @@ export const Map = () => {
         initialViewState={initialViewState}
         maxZoom={20}
         minZoom={1}
+        onLoad={() => {
+          const layers = mapRef.current?.getStyle().layers;
+          const labelLayerId = layers?.find(
+            (layer) => layer.type === "symbol" && layer.layout?.["text-field"],
+          )?.id;
+          setLayerId(labelLayerId);
+        }}
         onMove={(e) => {
           setViewState(e.viewState);
         }}
@@ -113,6 +116,12 @@ export const Map = () => {
         }}
         onMoveEnd={() => {
           setIsOnMove(false);
+        }}
+        onMouseDown={() => {
+          setIsOnDrag(true);
+        }}
+        onMouseUp={() => {
+          setIsOnDrag(false);
         }}
         ref={mapRef}
       >
@@ -145,7 +154,7 @@ export const Map = () => {
             ],
             "fill-extrusion-opacity": 0.6,
           }}
-          beforeId={labelLayerId}
+          beforeId={layerId}
         />
         <GeolocateControl position="top-left" />
         <FullscreenControl position="top-left" />

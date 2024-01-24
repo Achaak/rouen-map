@@ -28,8 +28,6 @@ export const useLines = () => {
 
       return true;
     });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, mapRef]);
 
   const linesFormatted = useMemo(() => {

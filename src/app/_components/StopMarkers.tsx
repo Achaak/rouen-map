@@ -7,11 +7,13 @@ import type { FC } from "react";
 import type { ClusterProperties } from "supercluster";
 import { cn } from "~/lib/utils";
 import { BusStopIcon } from "~/components/icons/BusStop";
-import { CardContent, CardHeader } from "~/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useShowStops } from "../_hooks/useShowStops";
 import { WheelchairIcon } from "~/components/icons/Wheelchair";
 import { Separator } from "~/components/ui/separator";
 import { useStopSelected } from "../_hooks/useStopSelected";
+import { Skeleton } from "~/components/ui/skeleton";
+import { StopIcon } from "~/components/StopIcon";
 
 const stopContainerClass = cn(
   "bg-card border-border rounded-full border p-1.5 shadow-md relative",
@@ -20,7 +22,7 @@ const stopContainerClass = cn(
 export const StopMarkers: FC = () => {
   const { current: mapRef } = useMap();
   const { viewState, setSelectedStopId } = useMapContext();
-  const { selectedStop } = useStopSelected();
+  const { selectedStop, selectedStopInfo, isLoading } = useStopSelected();
   const { stopClusters } = useStopClusters();
   const { showStops } = useShowStops();
 
@@ -30,13 +32,13 @@ export const StopMarkers: FC = () => {
     <>
       {stopClusters
         .filter((p) => p.properties.cluster)
-        .map((point) => {
-          const properties = point.properties as ClusterProperties;
-          const geometry = point.geometry;
+        .map((p) => {
+          const properties = p.properties as ClusterProperties;
+          const geometry = p.geometry;
 
           return (
             <Marker
-              key={point.id}
+              key={p.id}
               latitude={geometry.coordinates[1] ?? 0}
               longitude={geometry.coordinates[0] ?? 0}
               onClick={(e) => {
@@ -51,7 +53,6 @@ export const StopMarkers: FC = () => {
               }}
               style={{
                 cursor: "pointer",
-                // transition: "transform 0.2s",
               }}
             >
               <div className={stopContainerClass}>
@@ -66,9 +67,9 @@ export const StopMarkers: FC = () => {
 
       {stopClusters
         .filter((p) => !p.properties.cluster)
-        .map((point) => {
-          const properties = point.properties;
-          const geometry = point.geometry;
+        .map((p) => {
+          const properties = p.properties;
+          const geometry = p.geometry;
 
           if (properties.cluster) return null; // should never happen
 
@@ -83,11 +84,13 @@ export const StopMarkers: FC = () => {
               }}
               style={{
                 cursor: "pointer",
-                // transition: "transform 0.2s",
               }}
             >
               <div className={stopContainerClass}>
-                <BusStopIcon className="h-6 w-6 text-foreground" />
+                <StopIcon
+                  location_type={properties.locationType}
+                  className="h-6 w-6 text-foreground"
+                />
                 {properties.wheelchairBoarding && (
                   <WheelchairIcon className="absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary p-0.5 text-white" />
                 )}
@@ -106,16 +109,21 @@ export const StopMarkers: FC = () => {
           closeButton={false}
         >
           <CardHeader>
-            {/* <CardTitle>{selectedStop.stop_name}</CardTitle>
-            <CardDescription>Code: {selectedStop.stop_code}</CardDescription> */}
+            {isLoading ? (
+              <Skeleton className="h-6 w-32" />
+            ) : (
+              <CardTitle className="text-lg font-bold">
+                {selectedStopInfo?.name}
+              </CardTitle>
+            )}
           </CardHeader>
           <CardContent>
-            {/* <p>
-              Embarquement en fauteuil roulant :{" "}
-              {selectedStop.wheelchair_boarding ? "Oui" : "Non"}
-            </p> */}
-            <Separator className="my-2" />
+            <p>
+              Accès au fauteuil roulant :{" "}
+              {selectedStop.wheelchairBoarding ? "Oui" : "Non"}
+            </p>
 
+            <Separator className="my-2" />
             <p>Latitude: {selectedStop.latitude}</p>
             <p>Longitude: {selectedStop.longitude}</p>
           </CardContent>
