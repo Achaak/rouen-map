@@ -16,13 +16,13 @@ export const useStopClusters = () => {
       if (!stop.stop_lat || !stop.stop_lon) return false;
 
       // Filter location_type
-      if (stop.location_type !== 0) return false;
+      if (stop.location_type !== 0 && stop.location_type !== 1) return false;
 
       const bounds = mapRef.getBounds();
       return bounds.contains([stop.stop_lon, stop.stop_lat]);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stops, mapRef]);
+  }, [stops, mapRef, viewState]);
 
   const { clusters: stopClusters } = useSupercluster({
     points: filteredStops.map((stop) => ({
