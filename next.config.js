@@ -4,13 +4,7 @@
  */
 await import('./src/env.js');
 
-const __dirname = new URL('.', import.meta.url).pathname;
-
 /** @type {import("next").NextConfig} */
-const config = {
-  serverRuntimeConfig: {
-    PROJECT_ROOT: __dirname,
-  },
-};
+const config = {};
 
 export default config;

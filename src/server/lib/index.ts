@@ -4,8 +4,8 @@ import { z } from 'zod';
 import fs from 'node:fs';
 import { parse } from 'csv-parse';
 import { finished } from 'stream/promises';
-import getConfig from 'next/config';
 import { join } from 'node:path';
+import { cwd } from 'node:process';
 
 export const VEHICLE_POSITION =
   'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb';
@@ -48,9 +48,8 @@ const processFile = async <T extends z.ZodTypeAny>(
 ): Promise<z.infer<T>[]> => {
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
-  const { serverRuntimeConfig } = getConfig();
-  const p = join(serverRuntimeConfig.PROJECT_ROOT, path);
-  const parser = fs.createReadStream(p).pipe(
+  const cleanPath = join(cwd(), path);
+  const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
     })
