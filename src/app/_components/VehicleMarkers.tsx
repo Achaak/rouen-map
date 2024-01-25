@@ -30,41 +30,8 @@ export const VehicleMarkers: FC = () => {
   const { selectedVehicle, isLoading, selectedVehicleInfo } =
     useVehicleSelected();
 
-  // const selectedBusRoute = routes?.find(
-  //   (r) => r.route_id === Number(selectedBus?.vehicle?.trip?.routeId),
-  // );
-  // const selectedBusTrip = tripsUpdate?.find(
-  //   (t) => t.tripUpdate?.trip?.tripId === selectedBus?.vehicle?.trip?.tripId,
-  // );
-
   const { vehicleClusters } = useVehicleClusters();
   const [isFollow, setIsFollow] = useState(false);
-
-  // const { data: stopTimes, isLoading: isLoadingStopTimes } =
-  //   api.realtime.getStopTimes.useQuery(
-  //     {
-  //       stopIds:
-  //         selectedBusTrip?.tripUpdate?.stopTimeUpdate?.map(
-  //           (stu) => stu.stopId,
-  //         ) ?? [],
-  //       tripId: selectedBusTrip?.tripUpdate?.trip?.tripId ?? "",
-  //     },
-  //     {
-  //       enabled:
-  //         !!selectedBusTrip?.tripUpdate?.stopTimeUpdate?.length &&
-  //         !!selectedBusTrip?.tripUpdate?.trip?.tripId,
-  //     },
-  //   );
-
-  // const stopTimesFormatted = useMemo(() => {
-  //   if (!stopTimes) return [];
-
-  //   return stopTimes.map((st) => {
-  //     const tripUpdate = selectedBusTrip?.tripUpdate?.stopTimeUpdate?.find(
-  //       (stu) => stu.stopId === st.stop_id,
-  //     );
-  //   });
-  // }, [stopTimes]);
 
   useEffect(() => {
     if (!selectedVehicle || !isFollow) return;
@@ -95,27 +62,6 @@ export const VehicleMarkers: FC = () => {
   useEffect(() => {
     setIsFollow(false);
   }, [isOnDrag]);
-
-  // const selectedBusStopTime: {
-  //   stop_name: string;
-  // }[] = [];
-  // selectedBusTrip?.tripUpdate?.stopTimeUpdate?.forEach((stu) => {
-  //   const stop = stops?.find((s) => s.stop_id === stu.stopId);
-
-  //   if (!stop) return;
-
-  //   const stopTime = stopTimes?.find((t) => t.stop_id === stop.stop_id);
-  //   console.log(stopTime, stopTimes?.length);
-
-  //   if (!stopTime) return;
-
-  //   selectedBusStopTime.push({
-  //     stop_name: stop.stop_name,
-  //   });
-  //   // str += `${stop?.stop_name} (${stu.stopSequence}) ${stu.arrival?.delay} ${stu.departure?.delay}\n`;
-  // });
-
-  // console.log(selectedBusStopTime);
 
   return (
     <>
@@ -240,17 +186,26 @@ export const VehicleMarkers: FC = () => {
               )}
             </CardHeader>
             <CardContent>
-              {/* {isLoadingStopTimes ? (
+              {isLoading ? (
                 <p>Chargement...</p>
               ) : (
                 <ul>
-                  {stopTimesFormatted?.map((st) => (
-                    <li key={st.stop_id}>
-                      {st.arrival_time} ({st.stop_sequence})
+                  {selectedVehicleInfo?.stopTime?.map((st) => (
+                    <li key={st.stop_sequence}>
+                      {st.stop_name}{" "}
+                      {st.arrival_time
+                        ? new Date(
+                            Number(st.arrival_time) * 1000,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Aucune heure d'arrivée disponible"}{" "}
+                      ({st.arrival_delay})
                     </li>
                   ))}
                 </ul>
-              )} */}
+              )}
               <p>Latitude: {selectedVehicle.position.latitude}</p>
               <p>Longitude: {selectedVehicle.position.longitude}</p>
             </CardContent>

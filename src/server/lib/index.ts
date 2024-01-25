@@ -1,17 +1,17 @@
-import { got } from 'got';
-import { FeedMessage } from './gen/ts/gtfs-realtime';
-import { z } from 'zod';
-import fs from 'node:fs';
-import { parse } from 'csv-parse';
-import { finished } from 'stream/promises';
-import { join } from 'node:path';
-import { cwd } from 'node:process';
+import { got } from "got";
+import { FeedMessage } from "./gen/ts/gtfs-realtime";
+import { z } from "zod";
+import fs from "node:fs";
+import { parse } from "csv-parse";
+import { finished } from "stream/promises";
+import { join } from "node:path";
+import { cwd } from "node:process";
 
 export const VEHICLE_POSITION =
-  'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb';
+  "https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb";
 
 export const TRIP_UPDATE =
-  'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.TripUpdate.pb';
+  "https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.TripUpdate.pb";
 
 // export const TRIP_UPDATE =
 //   "https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt";
@@ -44,7 +44,7 @@ export type Stop = z.infer<typeof stopSchema>;
 
 const processFile = async <T extends z.ZodTypeAny>(
   schema: T,
-  path: string
+  path: string,
 ): Promise<z.infer<T>[]> => {
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
@@ -52,9 +52,9 @@ const processFile = async <T extends z.ZodTypeAny>(
   const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
-    })
+    }),
   );
-  parser.on('readable', function () {
+  parser.on("readable", function () {
     let record: string[] | null;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     while ((record = parser.read()) !== null) {
@@ -78,7 +78,7 @@ const processFile = async <T extends z.ZodTypeAny>(
             error: res.error,
             row,
           },
-          { depth: 10 }
+          { depth: 10 },
         );
       }
     }
@@ -88,14 +88,14 @@ const processFile = async <T extends z.ZodTypeAny>(
 };
 
 export const getStops = async () => {
-  const results = await processFile(stopSchema, '/data/ASTUCE/stops.txt');
+  const results = await processFile(stopSchema, "/data/ASTUCE/stops.txt");
   return results;
 };
 
 const tripSchema = z.object({
   route_id: z.string(),
   service_id: z.string(),
-  trip_id: z.coerce.number(),
+  trip_id: z.string(),
   trip_headsign: z.string(),
   direction_id: z.coerce.number(),
   block_id: z.coerce.number(),
@@ -106,7 +106,7 @@ const tripSchema = z.object({
 export type Trip = z.infer<typeof tripSchema>;
 
 export const getTrips = async () => {
-  const results = await processFile(tripSchema, '/data/ASTUCE/trips.txt');
+  const results = await processFile(tripSchema, "/data/ASTUCE/trips.txt");
   return results;
 };
 
@@ -125,7 +125,7 @@ const routeSchema = z.object({
 export type Route = z.infer<typeof routeSchema>;
 
 export const getRoutes = async () => {
-  const results = await processFile(routeSchema, '/data/ASTUCE/routes.txt');
+  const results = await processFile(routeSchema, "/data/ASTUCE/routes.txt");
   return results;
 };
 
@@ -143,12 +143,12 @@ const agencySchema = z.object({
 export type Agency = z.infer<typeof agencySchema>;
 
 export const getAgencies = async () => {
-  const results = await processFile(agencySchema, '/data/ASTUCE/agency.txt');
+  const results = await processFile(agencySchema, "/data/ASTUCE/agency.txt");
   return results;
 };
 
 const stopTimeSchema = z.object({
-  trip_id: z.coerce.number(),
+  trip_id: z.string(),
   arrival_time: z.string(),
   departure_time: z.string(),
   stop_id: z.string(),
@@ -162,7 +162,7 @@ export type StopTime = z.infer<typeof stopTimeSchema>;
 export const getStopTimes = async () => {
   const results = await processFile(
     stopTimeSchema,
-    '/data/ASTUCE/stop_times.txt'
+    "/data/ASTUCE/stop_times.txt",
   );
   return results;
 };

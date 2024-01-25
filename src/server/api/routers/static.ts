@@ -7,6 +7,7 @@ import {
   getRoutes,
   getAgencies,
   getStopTimes,
+  getTripUpdate,
 } from "~/server/lib";
 
 export const staticRouter = createTRPCRouter({
@@ -39,13 +40,16 @@ export const staticRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input: { vehicleId } }) => {
-      const vehiclePositions = await getVehiclePosition();
-      const routes = await getRoutes();
-      // const stops = await getStops();
-      // const stopTimes = await getStopTimes();
-      // const tripUpdate = await getTripUpdate();
+      const [stops, tripUpdates, routes, stopTimes, vehiclePositions] =
+        await Promise.all([
+          getStops(),
+          getTripUpdate(),
+          getRoutes(),
+          getStopTimes(),
+          getVehiclePosition(),
+        ]);
 
-      // Get the vehicle position from the vehicle_id
+      // Get the vehicle position from the vehicle id
       const vehiclePosition = vehiclePositions.entity.find(
         (vehiclePosition) => vehiclePosition.vehicle?.vehicle?.id === vehicleId,
       );
@@ -54,36 +58,39 @@ export const staticRouter = createTRPCRouter({
         return null;
       }
 
-      // Get the route type from the route_id
+      // Get the route type from the route id
       const route = routes?.find(
         (r) => r.route_id === vehiclePosition.vehicle?.trip?.routeId,
       );
 
-      // const tripUpdate = stopTimes.map((st) => {
-      //   vehiclePosition?.tripUpdate?.stopTimeUpdate?.find(
-      //     (stu) => stu.stopId === st.stop_id,
-      //   );
-      // });
+      // Get the trip update from the route id
+      const tripUpdate = tripUpdates.entity.find(
+        (tu) =>
+          tu.tripUpdate?.trip?.routeId === route?.route_id &&
+          tu.tripUpdate?.vehicle?.id === vehicleId,
+      );
 
-      // const selectedBusStopTime: {
-      //   stop_name: string;
-      // }[] = [];
-      // vehiclePosition?.tripUpdate?.stopTimeUpdate?.forEach((stu) => {
-      //   const stop = stops?.find((s) => s.stop_id === stu.stopId);
+      // Get the stop times from the trip id
+      const stopTime = stopTimes.filter(
+        (st) => st.trip_id === tripUpdate?.tripUpdate?.trip?.tripId,
+      );
 
-      //   if (!stop) return;
+      const tripUpdateStopTime = tripUpdate?.tripUpdate?.stopTimeUpdate?.map(
+        (stu) => {
+          const st = stopTime.find((st) => st.stop_id === stu.stopId);
+          const stop = stops.find((s) => s.stop_id === stu.stopId);
 
-      //   const stopTime = stopTimes?.find((t) => t.stop_id === stop.stop_id);
-      //   console.log(stopTime, stopTimes?.length);
+          return {
+            stop_name: stop?.stop_name,
+            arrival_time: stu?.arrival?.time,
+            arrival_delay: stu?.arrival?.delay,
+            departure_time: stu?.departure?.time,
+            departure_delay: stu?.departure?.delay,
+            stop_sequence: st?.stop_sequence,
+          };
+        },
+      );
 
-      //   if (!stopTime) return;
-
-      //   selectedBusStopTime.push({
-      //     stop_name: stop.stop_name,
-      //   });
-      // });
-
-      // console.log(selectedBusStopTime);
       return {
         routeShortName: route?.route_short_name,
         routeLongName: route?.route_long_name,
@@ -91,7 +98,7 @@ export const staticRouter = createTRPCRouter({
           route?.route_long_name.split(" <> ")[
             vehiclePosition.vehicle?.trip?.directionId === 0 ? 1 : 0
           ],
-        // stopTime: selectedBusStopTime,
+        stopTime: tripUpdateStopTime,
       };
     }),
   allStops: publicProcedure.query(() => {
@@ -155,8 +162,7 @@ export const staticRouter = createTRPCRouter({
 
       return stopTimes.filter(
         (stopTime) =>
-          stopTime.trip_id === Number(tripId) &&
-          stopIds.includes(stopTime.stop_id),
+          stopTime.trip_id === tripId && stopIds.includes(stopTime.stop_id),
       );
     }),
   lines: publicProcedure.query(async () => {
