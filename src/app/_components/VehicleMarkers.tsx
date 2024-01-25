@@ -201,7 +201,9 @@ export const VehicleMarkers: FC = () => {
                             minute: "2-digit",
                           })
                         : "Aucune heure d'arrivée disponible"}{" "}
-                      ({st.arrival_delay})
+                      {st.arrival_delay &&
+                        `(${st.arrival_delay > 0 ? "+" : ""}${st.arrival_delay}s ${st.arrival_delay > 0 ? "de" : "avant"} 
+                      l'horaire prévu)`}
                     </li>
                   ))}
                 </ul>

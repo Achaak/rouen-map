@@ -66,10 +66,9 @@ export const staticRouter = createTRPCRouter({
       // Get the trip update from the route id
       const tripUpdate = tripUpdates.entity.find(
         (tu) =>
-          tu.tripUpdate?.trip?.routeId === route?.route_id &&
-          tu.tripUpdate?.vehicle?.id === vehicleId,
+          tu.tripUpdate?.trip?.tripId === vehiclePosition.vehicle?.trip?.tripId,
       );
-
+      
       // Get the stop times from the trip id
       const stopTime = stopTimes.filter(
         (st) => st.trip_id === tripUpdate?.tripUpdate?.trip?.tripId,
