@@ -1,17 +1,20 @@
-import { got } from "got";
-import { FeedMessage } from "./gen/ts/gtfs-realtime";
-import { z } from "zod";
-import fs from "node:fs";
-import { parse } from "csv-parse";
-import { finished } from "stream/promises";
-import { join } from "node:path";
-import { cwd } from "node:process";
+import { got } from 'got';
+import { FeedMessage } from './gen/ts/gtfs-realtime';
+import { z } from 'zod';
+import fs from 'node:fs';
+import { parse } from 'csv-parse';
+import { finished } from 'stream/promises';
+import { join } from 'node:path';
+import { cwd } from 'node:process';
+import pMemoize from 'p-memoize';
+import ExpiryMap from 'expiry-map';
+import { ms } from '~/lib/ms';
 
 export const VEHICLE_POSITION =
-  "https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb";
+  'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb';
 
 export const TRIP_UPDATE =
-  "https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.TripUpdate.pb";
+  'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.TripUpdate.pb';
 
 // export const TRIP_UPDATE =
 //   "https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt";
@@ -44,7 +47,7 @@ export type Stop = z.infer<typeof stopSchema>;
 
 const processFile = async <T extends z.ZodTypeAny>(
   schema: T,
-  path: string,
+  path: string
 ): Promise<z.infer<T>[]> => {
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
@@ -52,9 +55,9 @@ const processFile = async <T extends z.ZodTypeAny>(
   const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
-    }),
+    })
   );
-  parser.on("readable", function () {
+  parser.on('readable', function () {
     let record: string[] | null;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     while ((record = parser.read()) !== null) {
@@ -78,7 +81,7 @@ const processFile = async <T extends z.ZodTypeAny>(
             error: res.error,
             row,
           },
-          { depth: 10 },
+          { depth: 10 }
         );
       }
     }
@@ -87,10 +90,14 @@ const processFile = async <T extends z.ZodTypeAny>(
   return records;
 };
 
-export const getStops = async () => {
-  const results = await processFile(stopSchema, "/data/ASTUCE/stops.txt");
+export const getStopsRaw = async () => {
+  const results = await processFile(stopSchema, '/data/ASTUCE/stops.txt');
   return results;
 };
+
+export const getStops = pMemoize(getStopsRaw, {
+  cache: new ExpiryMap(ms.months(1)),
+});
 
 const tripSchema = z.object({
   route_id: z.string(),
@@ -105,10 +112,14 @@ const tripSchema = z.object({
 
 export type Trip = z.infer<typeof tripSchema>;
 
-export const getTrips = async () => {
-  const results = await processFile(tripSchema, "/data/ASTUCE/trips.txt");
+export const getTripsRaw = async () => {
+  const results = await processFile(tripSchema, '/data/ASTUCE/trips.txt');
   return results;
 };
+
+export const getTrips = pMemoize(getTripsRaw, {
+  cache: new ExpiryMap(ms.months(1)),
+});
 
 const routeSchema = z.object({
   route_id: z.string(),
@@ -124,10 +135,14 @@ const routeSchema = z.object({
 
 export type Route = z.infer<typeof routeSchema>;
 
-export const getRoutes = async () => {
-  const results = await processFile(routeSchema, "/data/ASTUCE/routes.txt");
+export const getRoutesRaw = async () => {
+  const results = await processFile(routeSchema, '/data/ASTUCE/routes.txt');
   return results;
 };
+
+export const getRoutes = pMemoize(getRoutesRaw, {
+  cache: new ExpiryMap(ms.months(1)),
+});
 
 const agencySchema = z.object({
   agency_id: z.string(),
@@ -142,10 +157,14 @@ const agencySchema = z.object({
 
 export type Agency = z.infer<typeof agencySchema>;
 
-export const getAgencies = async () => {
-  const results = await processFile(agencySchema, "/data/ASTUCE/agency.txt");
+export const getAgenciesRaw = async () => {
+  const results = await processFile(agencySchema, '/data/ASTUCE/agency.txt');
   return results;
 };
+
+export const getAgencies = pMemoize(getAgenciesRaw, {
+  cache: new ExpiryMap(ms.months(1)),
+});
 
 const stopTimeSchema = z.object({
   trip_id: z.string(),
@@ -159,13 +178,17 @@ const stopTimeSchema = z.object({
 
 export type StopTime = z.infer<typeof stopTimeSchema>;
 
-export const getStopTimes = async () => {
+export const getStopTimesRaw = async () => {
   const results = await processFile(
     stopTimeSchema,
-    "/data/ASTUCE/stop_times.txt",
+    '/data/ASTUCE/stop_times.txt'
   );
   return results;
 };
+
+export const getStopTimes = pMemoize(getStopTimesRaw, {
+  cache: new ExpiryMap(ms.months(1)),
+});
 
 // const main = async () => {
 //   try {
