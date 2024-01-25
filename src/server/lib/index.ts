@@ -96,7 +96,7 @@ export const getStopsRaw = async () => {
 };
 
 export const getStops = pMemoize(getStopsRaw, {
-  cache: new ExpiryMap(ms.months(1)),
+  cache: new ExpiryMap(ms.days(10)),
 });
 
 const tripSchema = z.object({
@@ -118,7 +118,7 @@ export const getTripsRaw = async () => {
 };
 
 export const getTrips = pMemoize(getTripsRaw, {
-  cache: new ExpiryMap(ms.months(1)),
+  cache: new ExpiryMap(ms.days(10)),
 });
 
 const routeSchema = z.object({
@@ -141,7 +141,7 @@ export const getRoutesRaw = async () => {
 };
 
 export const getRoutes = pMemoize(getRoutesRaw, {
-  cache: new ExpiryMap(ms.months(1)),
+  cache: new ExpiryMap(ms.days(10)),
 });
 
 const agencySchema = z.object({
@@ -163,7 +163,7 @@ export const getAgenciesRaw = async () => {
 };
 
 export const getAgencies = pMemoize(getAgenciesRaw, {
-  cache: new ExpiryMap(ms.months(1)),
+  cache: new ExpiryMap(ms.days(10)),
 });
 
 const stopTimeSchema = z.object({
@@ -187,7 +187,7 @@ export const getStopTimesRaw = async () => {
 };
 
 export const getStopTimes = pMemoize(getStopTimesRaw, {
-  cache: new ExpiryMap(ms.months(1)),
+  cache: new ExpiryMap(ms.days(10)),
 });
 
 // const main = async () => {
