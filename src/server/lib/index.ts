@@ -1,11 +1,11 @@
 import { got } from 'got';
 import { FeedMessage } from './gen/ts/gtfs-realtime';
 import { z } from 'zod';
-import fs from 'node:fs';
+import fs from 'fs';
 import { parse } from 'csv-parse';
 import { finished } from 'stream/promises';
-import { join } from 'node:path';
-import { cwd } from 'node:process';
+import { join } from 'path';
+import { cwd } from 'process';
 import pMemoize from 'p-memoize';
 import ExpiryMap from 'expiry-map';
 import { ms } from '~/lib/ms';
