@@ -53,9 +53,6 @@ const processFile = async <T extends z.ZodTypeAny>(
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
   const cleanPath = join(cwd(), path);
-  console.log(`reading ${cleanPath}`);
-  console.log(`stat: ${JSON.stringify(await stat(cleanPath))}`);
-  console.log(`content: {${fs.readFileSync(cleanPath).toString()}}`);
   const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
