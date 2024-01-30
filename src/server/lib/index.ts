@@ -9,6 +9,7 @@ import { cwd } from 'node:process';
 import pMemoize from 'p-memoize';
 import ExpiryMap from 'expiry-map';
 import { ms } from '~/lib/ms';
+import { stat } from 'fs/promises';
 
 export const VEHICLE_POSITION =
   'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb';
@@ -52,6 +53,9 @@ const processFile = async <T extends z.ZodTypeAny>(
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
   const cleanPath = join(cwd(), path);
+  console.log(`reading ${cleanPath}`);
+  console.log(`stat: ${JSON.stringify(await stat(cleanPath))}`);
+  console.log(`content: {${fs.readFileSync(cleanPath).toString()}}`);
   const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
@@ -91,10 +95,7 @@ const processFile = async <T extends z.ZodTypeAny>(
 };
 
 export const getStopsRaw = async () => {
-  const results = await processFile(
-    stopSchema,
-    '../../../data/ASTUCE/stops.txt'
-  );
+  const results = await processFile(stopSchema, '/data/ASTUCE/stops.txt');
   return results;
 };
 
@@ -116,10 +117,7 @@ const tripSchema = z.object({
 export type Trip = z.infer<typeof tripSchema>;
 
 export const getTripsRaw = async () => {
-  const results = await processFile(
-    tripSchema,
-    '../../../data/ASTUCE/trips.txt'
-  );
+  const results = await processFile(tripSchema, '/data/ASTUCE/trips.txt');
   return results;
 };
 
@@ -142,10 +140,7 @@ const routeSchema = z.object({
 export type Route = z.infer<typeof routeSchema>;
 
 export const getRoutesRaw = async () => {
-  const results = await processFile(
-    routeSchema,
-    '../../../data/ASTUCE/routes.txt'
-  );
+  const results = await processFile(routeSchema, '/data/ASTUCE/routes.txt');
   return results;
 };
 
@@ -167,10 +162,7 @@ const agencySchema = z.object({
 export type Agency = z.infer<typeof agencySchema>;
 
 export const getAgenciesRaw = async () => {
-  const results = await processFile(
-    agencySchema,
-    '../../../data/ASTUCE/agency.txt'
-  );
+  const results = await processFile(agencySchema, '/data/ASTUCE/agency.txt');
   return results;
 };
 
@@ -193,7 +185,7 @@ export type StopTime = z.infer<typeof stopTimeSchema>;
 export const getStopTimesRaw = async () => {
   const results = await processFile(
     stopTimeSchema,
-    '../../../data/ASTUCE/stop_times.txt'
+    '/data/ASTUCE/stop_times.txt'
   );
   return results;
 };
