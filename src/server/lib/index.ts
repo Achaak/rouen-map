@@ -47,15 +47,11 @@ export type Stop = z.infer<typeof stopSchema>;
 
 const processFile = async <T extends z.ZodTypeAny>(
   schema: T,
-  path: string
+  stream: fs.ReadStream
 ): Promise<z.infer<T>[]> => {
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
-  const cleanPath = join(cwd(), path);
-  const content = fs.readFileSync(cleanPath, 'utf-8');
-  console.log(content);
-  // console.dir({ cleanPath, test: cwd() + path });
-  const parser = fs.createReadStream(cleanPath).pipe(
+  const parser = stream.pipe(
     parse({
       // txt options if any
     })
@@ -95,7 +91,10 @@ const processFile = async <T extends z.ZodTypeAny>(
 };
 
 export const getStopsRaw = async () => {
-  const results = await processFile(stopSchema, '/data/ASTUCE/stops.txt');
+  const results = await processFile(
+    stopSchema,
+    fs.createReadStream(join(cwd(), '/data/ASTUCE/stops.txt'))
+  );
   return results;
 };
 
@@ -117,7 +116,10 @@ const tripSchema = z.object({
 export type Trip = z.infer<typeof tripSchema>;
 
 export const getTripsRaw = async () => {
-  const results = await processFile(tripSchema, '/data/ASTUCE/trips.txt');
+  const results = await processFile(
+    tripSchema,
+    fs.createReadStream(join(cwd(), '/data/ASTUCE/trips.txt'))
+  );
   return results;
 };
 
@@ -140,7 +142,10 @@ const routeSchema = z.object({
 export type Route = z.infer<typeof routeSchema>;
 
 export const getRoutesRaw = async () => {
-  const results = await processFile(routeSchema, '/data/ASTUCE/routes.txt');
+  const results = await processFile(
+    routeSchema,
+    fs.createReadStream(join(cwd(), '/data/ASTUCE/routes.txt'))
+  );
   return results;
 };
 
@@ -162,7 +167,10 @@ const agencySchema = z.object({
 export type Agency = z.infer<typeof agencySchema>;
 
 export const getAgenciesRaw = async () => {
-  const results = await processFile(agencySchema, '/data/ASTUCE/agency.txt');
+  const results = await processFile(
+    agencySchema,
+    fs.createReadStream(join(cwd(), '/data/ASTUCE/agency.txt'))
+  );
   return results;
 };
 
@@ -185,7 +193,7 @@ export type StopTime = z.infer<typeof stopTimeSchema>;
 export const getStopTimesRaw = async () => {
   const results = await processFile(
     stopTimeSchema,
-    '/data/ASTUCE/stop_times.txt'
+    fs.createReadStream(join(cwd(), '/data/ASTUCE/stop_times.txt'))
   );
   return results;
 };
