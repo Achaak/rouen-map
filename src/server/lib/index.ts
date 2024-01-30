@@ -9,7 +9,6 @@ import { cwd } from 'node:process';
 import pMemoize from 'p-memoize';
 import ExpiryMap from 'expiry-map';
 import { ms } from '~/lib/ms';
-import { stat } from 'fs/promises';
 
 export const VEHICLE_POSITION =
   'https://www.reseau-astuce.fr/ftp/gtfsrt/Astuce.VehiclePosition.pb';
@@ -53,6 +52,7 @@ const processFile = async <T extends z.ZodTypeAny>(
   const records: z.infer<T>[] = [];
   const headers: string[] = [];
   const cleanPath = join(cwd(), path);
+  // console.dir({ cleanPath, test: cwd() + path });
   const parser = fs.createReadStream(cleanPath).pipe(
     parse({
       // txt options if any
@@ -89,6 +89,7 @@ const processFile = async <T extends z.ZodTypeAny>(
   });
   await finished(parser);
   return records;
+  z;
 };
 
 export const getStopsRaw = async () => {
