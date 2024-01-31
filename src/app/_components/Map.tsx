@@ -55,6 +55,7 @@ const MapContext = createContext<{
   isOnDrag: boolean;
   isOnMove: boolean;
   bounds?: Bounds;
+  onUnselectAll: () => void;
 }>({
   viewState: initialViewState,
   setSelectedVehicleId: () => {
@@ -65,6 +66,9 @@ const MapContext = createContext<{
   },
   isOnDrag: false,
   isOnMove: false,
+  onUnselectAll: () => {
+    // do nothing
+  },
 });
 export const useMapContext = () => useContext(MapContext);
 
@@ -84,6 +88,11 @@ export const Map = () => {
   });
   const { data: stops } = api.static.getStops.useQuery();
   const { data: lines } = api.static.lines.useQuery();
+
+  const handleUnselectAll = () => {
+    setSelectedVehicleId(undefined);
+    setSelectedStopId(undefined);
+  }
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -111,6 +120,7 @@ export const Map = () => {
         isOnDrag,
         isOnMove,
         bounds,
+        onUnselectAll: handleUnselectAll,
       }}
     >
       <MapGl

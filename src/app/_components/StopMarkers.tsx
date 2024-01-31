@@ -7,7 +7,6 @@ import type { FC } from 'react';
 import type { ClusterProperties } from 'supercluster';
 import { cn } from '~/lib/utils';
 import { BusStopIcon } from '~/components/icons/BusStop';
-import { CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { useShowStops } from '../_hooks/useShowStops';
 import { WheelchairIcon } from '~/components/icons/Wheelchair';
 import { useStopSelected } from '../_hooks/useStopSelected';
@@ -21,6 +20,13 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '~/components/ui/sheet';
+import { useMediaScreenValid } from '~/hooks/useScreen';
 
 const stopContainerClass = cn(
   'bg-card border-border rounded-full border p-1.5 shadow-md relative'
@@ -28,10 +34,14 @@ const stopContainerClass = cn(
 
 export const StopMarkers: FC = () => {
   const { current: mapRef } = useMap();
-  const { viewState, setSelectedStopId } = useMapContext();
+  const { viewState, setSelectedStopId, onUnselectAll } = useMapContext();
   const { selectedStop, selectedStopInfo, isLoading } = useStopSelected();
   const { stopClusters } = useStopClusters();
   const { showStops } = useShowStops();
+  const isLg = useMediaScreenValid({
+    media: 'lg',
+    operator: '>=',
+  });
 
   if (!showStops) return null;
 
@@ -93,6 +103,9 @@ export const StopMarkers: FC = () => {
                 cursor: 'pointer',
               }}
             >
+              {properties.id === selectedStop?.id && (
+                <div className="absolute left-0 top-0 h-full w-full animate-ping rounded-full bg-primary duration-1000"></div>
+              )}
               <div className={stopContainerClass}>
                 <StopIcon
                   location_type={properties.locationType}
@@ -107,108 +120,104 @@ export const StopMarkers: FC = () => {
         })}
 
       {selectedStop?.latitude && selectedStop?.longitude && (
-        <Popup
-          anchor="top"
-          offset={25}
-          latitude={selectedStop.latitude}
-          longitude={selectedStop.longitude}
-          onClose={() => setSelectedStopId(undefined)}
-          closeButton={false}
-          style={{
-            maxWidth: 'none',
-            width: 'auto',
-          }}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-x-4">
-            {isLoading ? (
-              <Skeleton className="h-6 w-32" />
-            ) : (
-              <>
-                <CardTitle className="text-lg font-bold">
-                  {selectedStopInfo?.name}
-                </CardTitle>
-                {selectedStop.wheelchairBoarding && (
-                  <WheelchairIcon className="h-5 w-5 rounded-full bg-primary p-0.5 text-white" />
-                )}
-              </>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading && <Skeleton className="h-6 w-32" />}
-            {selectedStopInfo?.routes.map((route, index) => (
-              <div key={index}>
-                <span
-                  className="rounded-full px-1.5 py-0.5 text-xs text-white"
-                  style={{
-                    backgroundColor: `#${route.color}`,
-                  }}
-                >
-                  {route.shortName}
-                </span>
+        <Sheet open={!!selectedStop} modal={false}>
+          <SheetContent
+            side={isLg ? 'right' : 'bottom'}
+            onClose={() => onUnselectAll()}
+          >
+            <SheetHeader className="flex flex-row items-center space-x-2">
+              {isLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                <>
+                  {selectedStop.wheelchairBoarding && (
+                    <WheelchairIcon className="h-5 w-5 rounded-full bg-primary p-0.5 text-white" />
+                  )}
+                  <SheetTitle className="text-lg font-bold">
+                    {selectedStopInfo?.name}
+                  </SheetTitle>
+                </>
+              )}
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              {isLoading && <Skeleton className="h-6 w-32" />}
+              {selectedStopInfo?.routes.map((route, index) => (
+                <div key={index}>
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-xs text-white"
+                    style={{
+                      backgroundColor: `#${route.color}`,
+                    }}
+                  >
+                    {route.shortName}
+                  </span>
 
-                {route.tripUpdates.length > 0 ? (
-                  <Table key={index} className="w-auto text-sm">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-center">
-                          Heure prévue
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Heure réelle
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {route.tripUpdates.map((tu, index) => {
-                        const arrivalTime = tu.arrivalTime
-                          ? new Date(Number(tu.arrivalTime) * 1000)
-                          : undefined;
-                        const arrivalTimeReal = arrivalTime
-                          ? new Date(arrivalTime)
-                          : undefined;
-
-                        if (tu.arrivalDelay && arrivalTimeReal) {
-                          arrivalTimeReal.setSeconds(
-                            arrivalTimeReal.getSeconds() + tu.arrivalDelay
-                          );
-                        }
-
-                        return (
-                          <TableRow key={index}>
-                            <TableCell className="text-center">
-                              {arrivalTime
-                                ? arrivalTime.toLocaleTimeString()
-                                : "Aucune heure d'arrivée disponible"}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {arrivalTimeReal
-                                ? arrivalTimeReal.toLocaleTimeString()
-                                : "Aucune heure d'arrivée disponible"}
-                            </TableCell>
+                  {route.tripUpdates.length > 0 ? (
+                    <div className="max-h-60 overflow-y-auto lg:max-h-none">
+                      <Table key={index} className="w-auto text-sm">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-center">
+                              Heure prévue
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Heure réelle
+                            </TableHead>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center">Aucune donnée</div>
-                )}
-              </div>
-            ))}
-            <Table className="w-auto text-sm">
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-semibold">Latitude</TableCell>
-                  <TableCell>{selectedStop.latitude}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-semibold">Longitude</TableCell>
-                  <TableCell>{selectedStop.longitude}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Popup>
+                        </TableHeader>
+                        <TableBody>
+                          {route.tripUpdates.map((tu, index) => {
+                            const arrivalTime = tu.arrivalTime
+                              ? new Date(Number(tu.arrivalTime) * 1000)
+                              : undefined;
+                            const arrivalTimeReal = arrivalTime
+                              ? new Date(arrivalTime)
+                              : undefined;
+
+                            if (tu.arrivalDelay && arrivalTimeReal) {
+                              arrivalTimeReal.setSeconds(
+                                arrivalTimeReal.getSeconds() + tu.arrivalDelay
+                              );
+                            }
+
+                            return (
+                              <TableRow key={index}>
+                                <TableCell className="text-center">
+                                  {arrivalTime
+                                    ? arrivalTime.toLocaleTimeString()
+                                    : "Aucune heure d'arrivée disponible"}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {arrivalTimeReal
+                                    ? arrivalTimeReal.toLocaleTimeString()
+                                    : "Aucune heure d'arrivée disponible"}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center">Aucune donnée</div>
+                  )}
+                </div>
+              ))}
+              <Table className="w-auto text-sm">
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-semibold">Latitude</TableCell>
+                    <TableCell>{selectedStop.latitude}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold">Longitude</TableCell>
+                    <TableCell>{selectedStop.longitude}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
     </>
   );
