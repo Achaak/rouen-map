@@ -92,7 +92,17 @@ export const Map = () => {
   const handleUnselectAll = () => {
     setSelectedVehicleId(undefined);
     setSelectedStopId(undefined);
-  }
+  };
+
+  const handleSelectVehicle = (vehicleId?: string) => {
+    setSelectedVehicleId(vehicleId);
+    setSelectedStopId(undefined);
+  };
+
+  const handleSelectStop = (stopId?: string) => {
+    setSelectedVehicleId(undefined);
+    setSelectedStopId(stopId);
+  };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -111,9 +121,9 @@ export const Map = () => {
       value={{
         viewState,
         selectedVehicleId,
-        setSelectedVehicleId,
+        setSelectedVehicleId: handleSelectVehicle,
         selectedStopId,
-        setSelectedStopId,
+        setSelectedStopId: handleSelectStop,
         vehicles,
         stops,
         lines,
