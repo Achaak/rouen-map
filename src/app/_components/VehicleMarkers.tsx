@@ -1,27 +1,34 @@
-"use client";
+'use client';
 
-import { useVehicleClusters } from "../_hooks/useVehicleClusters";
-import { Marker, Popup, useMap } from "react-map-gl";
-import { useMapContext } from "./Map";
-import { useEffect, type FC, useState } from "react";
-import type { ClusterProperties } from "supercluster";
-import { cn } from "~/lib/utils";
-import { BusIcon } from "~/components/icons/Bus";
+import { useVehicleClusters } from '../_hooks/useVehicleClusters';
+import { Marker, Popup, useMap } from 'react-map-gl';
+import { useMapContext } from './Map';
+import { useEffect, type FC, useState } from 'react';
+import type { ClusterProperties } from 'supercluster';
+import { cn } from '~/lib/utils';
+import { BusIcon } from '~/components/icons/Bus';
 import {
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
-import { ArrowDownIcon } from "~/components/icons/ArrowDown";
-import { VehicleIcon } from "~/components/VehicleIcon";
-import { useVehicleSelected } from "../_hooks/useVehicleSelected";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Button } from "~/components/ui/button";
+} from '~/components/ui/card';
+import { ArrowDownIcon } from '~/components/icons/ArrowDown';
+import { VehicleIcon } from '~/components/VehicleIcon';
+import { useVehicleSelected } from '../_hooks/useVehicleSelected';
+import { Skeleton } from '~/components/ui/skeleton';
+import { Button } from '~/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/components/ui/table';
 
 const vehicleContainerClass = cn(
-  "bg-card border-border rounded-full border p-2 shadow-md relative",
+  'bg-card border-border rounded-full border p-2 shadow-md relative'
 );
 
 export const VehicleMarkers: FC = () => {
@@ -87,7 +94,7 @@ export const VehicleMarkers: FC = () => {
                 });
               }}
               style={{
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
             >
               <div className={vehicleContainerClass}>
@@ -118,8 +125,8 @@ export const VehicleMarkers: FC = () => {
                 setSelectedVehicleId(properties.id);
               }}
               style={{
-                cursor: "pointer",
-                transition: "transform 500ms",
+                cursor: 'pointer',
+                // transition: 'transform 500ms',
                 // transition: isOnMove ? undefined : "transform 500ms",
                 // transitionDelay: "500ms",
               }}
@@ -161,9 +168,9 @@ export const VehicleMarkers: FC = () => {
             onClose={() => setSelectedVehicleId(undefined)}
             closeButton={false}
             style={{
-              maxWidth: "none",
-              width: "auto",
-              transition: "transform 500ms",
+              maxWidth: 'none',
+              width: 'auto',
+              // transition: 'transform 500ms',
               // transition: isOnMove ? undefined : "transform 500ms",
               // transitionDelay: "500ms",
             }}
@@ -180,55 +187,99 @@ export const VehicleMarkers: FC = () => {
               {isLoading ? (
                 <Skeleton className="h-4 w-24" />
               ) : (
-                <CardDescription>
-                  Direction: {selectedVehicleInfo?.direction}
-                </CardDescription>
+                <div className="flex flex-row items-center justify-between space-x-2">
+                  <CardDescription>
+                    Direction: {selectedVehicleInfo?.direction}
+                  </CardDescription>
+                  <Button
+                    size="xs"
+                    onClick={() => {
+                      if (isFollow) {
+                        setIsFollow(false);
+                        return;
+                      }
+
+                      setIsFollow(true);
+                      flyToFollow({
+                        zoom: 16,
+                      });
+                    }}
+                  >
+                    {!isFollow ? 'Suivre' : 'Ne pas suivre'}
+                  </Button>
+                </div>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {isLoading ? (
-                <p>Chargement...</p>
+                <Skeleton className="h-4 w-32" />
               ) : (
-                <ul>
-                  {selectedVehicleInfo?.stopTime?.map((st) => (
-                    <li key={st.stop_sequence}>
-                      {st.stop_name}{" "}
-                      {st.arrival_time
-                        ? new Date(
-                            Number(st.arrival_time) * 1000,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Aucune heure d'arrivée disponible"}{" "}
-                      {st.arrival_delay &&
-                        `(${st.arrival_delay > 0 ? "+" : ""}${st.arrival_delay}s ${st.arrival_delay > 0 ? "de" : "avant"} 
-                      l'horaire prévu)`}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p>Latitude: {selectedVehicle.position.latitude}</p>
-              <p>Longitude: {selectedVehicle.position.longitude}</p>
-            </CardContent>
-            <CardFooter>
-              <Button
-                size="xs"
-                onClick={() => {
-                  if (isFollow) {
-                    setIsFollow(false);
-                    return;
-                  }
+                <>
+                  {selectedVehicleInfo?.stopTime?.length && (
+                    <Table className="text-sm">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead></TableHead>
+                          <TableHead className="text-center">
+                            Heure prévue
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Heure réelle
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedVehicleInfo.stopTime.map((st, index) => {
+                          const arrivalTime = st.arrivalTime
+                            ? new Date(Number(st.arrivalTime) * 1000)
+                            : undefined;
+                          const arrivalTimeReal = arrivalTime
+                            ? new Date(arrivalTime)
+                            : undefined;
 
-                  setIsFollow(true);
-                  flyToFollow({
-                    zoom: 16,
-                  });
-                }}
-              >
-                {!isFollow ? "Suivre" : "Ne pas suivre"}
-              </Button>
-            </CardFooter>
+                          if (st.arrival_delay && arrivalTimeReal) {
+                            arrivalTimeReal.setSeconds(
+                              arrivalTimeReal.getSeconds() + st.arrival_delay
+                            );
+                          }
+
+                          return (
+                            <TableRow key={index}>
+                              <TableCell className="font-semibold">
+                                {st.stopName}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {arrivalTime
+                                  ? arrivalTime.toLocaleTimeString()
+                                  : "Aucune heure d'arrivée disponible"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {arrivalTimeReal
+                                  ? arrivalTimeReal.toLocaleTimeString()
+                                  : "Aucune heure d'arrivée disponible"}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+                </>
+              )}
+
+              <Table className="w-auto text-sm">
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-semibold">Latitude</TableCell>
+                    <TableCell>{selectedVehicle.position.latitude}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold">Longitude</TableCell>
+                    <TableCell>{selectedVehicle.position.longitude}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
           </Popup>
         )}
     </>

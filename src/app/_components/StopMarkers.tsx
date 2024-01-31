@@ -1,22 +1,29 @@
-"use client";
+'use client';
 
-import { Marker, Popup, useMap } from "react-map-gl";
-import { useMapContext } from "./Map";
-import { useStopClusters } from "../_hooks/useStopClusters";
-import type { FC } from "react";
-import type { ClusterProperties } from "supercluster";
-import { cn } from "~/lib/utils";
-import { BusStopIcon } from "~/components/icons/BusStop";
-import { CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useShowStops } from "../_hooks/useShowStops";
-import { WheelchairIcon } from "~/components/icons/Wheelchair";
-import { Separator } from "~/components/ui/separator";
-import { useStopSelected } from "../_hooks/useStopSelected";
-import { Skeleton } from "~/components/ui/skeleton";
-import { StopIcon } from "~/components/StopIcon";
+import { Marker, Popup, useMap } from 'react-map-gl';
+import { useMapContext } from './Map';
+import { useStopClusters } from '../_hooks/useStopClusters';
+import type { FC } from 'react';
+import type { ClusterProperties } from 'supercluster';
+import { cn } from '~/lib/utils';
+import { BusStopIcon } from '~/components/icons/BusStop';
+import { CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { useShowStops } from '../_hooks/useShowStops';
+import { WheelchairIcon } from '~/components/icons/Wheelchair';
+import { useStopSelected } from '../_hooks/useStopSelected';
+import { Skeleton } from '~/components/ui/skeleton';
+import { StopIcon } from '~/components/StopIcon';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/components/ui/table';
 
 const stopContainerClass = cn(
-  "bg-card border-border rounded-full border p-1.5 shadow-md relative",
+  'bg-card border-border rounded-full border p-1.5 shadow-md relative'
 );
 
 export const StopMarkers: FC = () => {
@@ -52,7 +59,7 @@ export const StopMarkers: FC = () => {
                 });
               }}
               style={{
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
             >
               <div className={stopContainerClass}>
@@ -83,7 +90,7 @@ export const StopMarkers: FC = () => {
                 setSelectedStopId(properties.id);
               }}
               style={{
-                cursor: "pointer",
+                cursor: 'pointer',
               }}
             >
               <div className={stopContainerClass}>
@@ -107,25 +114,99 @@ export const StopMarkers: FC = () => {
           longitude={selectedStop.longitude}
           onClose={() => setSelectedStopId(undefined)}
           closeButton={false}
+          style={{
+            maxWidth: 'none',
+            width: 'auto',
+          }}
         >
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-x-4">
             {isLoading ? (
               <Skeleton className="h-6 w-32" />
             ) : (
-              <CardTitle className="text-lg font-bold">
-                {selectedStopInfo?.name}
-              </CardTitle>
+              <>
+                <CardTitle className="text-lg font-bold">
+                  {selectedStopInfo?.name}
+                </CardTitle>
+                {selectedStop.wheelchairBoarding && (
+                  <WheelchairIcon className="h-5 w-5 rounded-full bg-primary p-0.5 text-white" />
+                )}
+              </>
             )}
           </CardHeader>
-          <CardContent>
-            <p>
-              Accès au fauteuil roulant :{" "}
-              {selectedStop.wheelchairBoarding ? "Oui" : "Non"}
-            </p>
+          <CardContent className="space-y-4">
+            {isLoading && <Skeleton className="h-6 w-32" />}
+            {selectedStopInfo?.routes.map((route, index) => (
+              <div key={index}>
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-xs text-white"
+                  style={{
+                    backgroundColor: `#${route.color}`,
+                  }}
+                >
+                  {route.shortName}
+                </span>
 
-            <Separator className="my-2" />
-            <p>Latitude: {selectedStop.latitude}</p>
-            <p>Longitude: {selectedStop.longitude}</p>
+                {route.tripUpdates.length > 0 ? (
+                  <Table key={index} className="w-auto text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-center">
+                          Heure prévue
+                        </TableHead>
+                        <TableHead className="text-center">
+                          Heure réelle
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {route.tripUpdates.map((tu, index) => {
+                        const arrivalTime = tu.arrivalTime
+                          ? new Date(Number(tu.arrivalTime) * 1000)
+                          : undefined;
+                        const arrivalTimeReal = arrivalTime
+                          ? new Date(arrivalTime)
+                          : undefined;
+
+                        if (tu.arrivalDelay && arrivalTimeReal) {
+                          arrivalTimeReal.setSeconds(
+                            arrivalTimeReal.getSeconds() + tu.arrivalDelay
+                          );
+                        }
+
+                        return (
+                          <TableRow key={index}>
+                            <TableCell className="text-center">
+                              {arrivalTime
+                                ? arrivalTime.toLocaleTimeString()
+                                : "Aucune heure d'arrivée disponible"}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {arrivalTimeReal
+                                ? arrivalTimeReal.toLocaleTimeString()
+                                : "Aucune heure d'arrivée disponible"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center">Aucune donnée</div>
+                )}
+              </div>
+            ))}
+            <Table className="w-auto text-sm">
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-semibold">Latitude</TableCell>
+                  <TableCell>{selectedStop.latitude}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-semibold">Longitude</TableCell>
+                  <TableCell>{selectedStop.longitude}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </CardContent>
         </Popup>
       )}

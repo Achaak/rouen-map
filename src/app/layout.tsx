@@ -1,53 +1,53 @@
-import "~/styles/globals.css";
+import '~/styles/globals.css';
 
-import { Inter } from "next/font/google";
-import { type Viewport, type Metadata } from "next";
-import { TRPCReactProvider } from "~/trpc/react";
+import { Inter } from 'next/font/google';
+import { type Viewport, type Metadata } from 'next';
+import { TRPCReactProvider } from '~/trpc/react';
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
+  subsets: ['latin'],
+  variable: '--font-sans',
 });
 
-const title = "Rouen transport";
+const title = 'Rouen transport';
 const description =
-  "Rouen transport est une application qui permet de visualiser les transports en commun de la ville de Rouen.";
-const appName = "Rouen transport";
+  'Rouen transport est une application qui permet de visualiser les transports en commun de la ville de Rouen.';
+const appName = 'Rouen transport';
 
 export const metadata: Metadata = {
   title,
   description,
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
   applicationName: appName,
-  category: "portfolio",
-  creator: "Axel Lavoie & Christopher Yovanovitch",
+  category: 'portfolio',
+  creator: 'Axel Lavoie & Christopher Yovanovitch',
   openGraph: {
-    url: "https:/rouen-transport.vercel.app",
+    url: 'https:/rouen-transport.vercel.app',
     title,
     description,
-    type: "profile",
-    countryName: "France",
-    locale: "fr_FR",
+    type: 'profile',
+    countryName: 'France',
+    locale: 'fr_FR',
     siteName: appName,
-    determiner: "the",
+    determiner: 'the',
   },
-  robots: "index, follow",
+  robots: 'index, follow',
   appleWebApp: {
     title,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: 'black-translucent',
     capable: true,
-    startupImage: "/images/logo.png",
+    startupImage: '/images/logo.png',
   },
   authors: {
-    name: "Axel Lavoie & Christopher Yovanovitch",
-    url: "https://rouen-transport.vercel.app",
+    name: 'Axel Lavoie & Christopher Yovanovitch',
+    url: 'https://rouen-transport.vercel.app',
   },
-  generator: "Next.js",
-  publisher: "Vercel",
+  generator: 'Next.js',
+  publisher: 'Vercel',
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2dac5c",
+  themeColor: '#2dac5c',
 };
 
 export default function RootLayout({

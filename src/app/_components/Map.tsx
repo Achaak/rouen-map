@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   FullscreenControl,
@@ -9,15 +9,22 @@ import {
   NavigationControl,
   ScaleControl,
   type ViewState,
-} from "react-map-gl";
-import { createContext, useContext, useRef, useState } from "react";
-import { env } from "~/env";
-import { api } from "~/trpc/react";
-import type { RouterOutput } from "~/server/api/root";
-import { VehicleMarkers } from "./VehicleMarkers";
-import { StopMarkers } from "./StopMarkers";
-import { LineLayers } from "./LineLayers";
-import { ControlPanel } from "./ControlPanel";
+} from 'react-map-gl';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { env } from '~/env';
+import { api } from '~/trpc/react';
+import type { RouterOutput } from '~/server/api/root';
+import { VehicleMarkers } from './VehicleMarkers';
+import { StopMarkers } from './StopMarkers';
+import { LineLayers } from './LineLayers';
+import { ControlPanel } from './ControlPanel';
+
+type Bounds = {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+};
 
 const initialViewState: ViewState = {
   latitude: 49.433331,
@@ -37,16 +44,17 @@ const initialViewState: ViewState = {
 
 const MapContext = createContext<{
   viewState: ViewState;
-  vehicles?: RouterOutput["static"]["getVehicles"];
+  vehicles?: RouterOutput['static']['getVehicles'];
   selectedVehicleId?: string;
   setSelectedVehicleId: (vehiclesId?: string) => void;
-  stops?: RouterOutput["static"]["getStops"];
+  stops?: RouterOutput['static']['getStops'];
   selectedStopId?: string;
   setSelectedStopId: (stopId?: string) => void;
-  lines?: RouterOutput["static"]["lines"];
-  trips?: RouterOutput["static"]["allTrips"];
+  lines?: RouterOutput['static']['lines'];
+  trips?: RouterOutput['static']['allTrips'];
   isOnDrag: boolean;
   isOnMove: boolean;
+  bounds?: Bounds;
 }>({
   viewState: initialViewState,
   setSelectedVehicleId: () => {
@@ -65,6 +73,7 @@ export const Map = () => {
   const [viewState, setViewState] = useState<ViewState>(initialViewState);
   const [isOnDrag, setIsOnDrag] = useState(false);
   const [isOnMove, setIsOnMove] = useState(false);
+  const [bounds, setBounds] = useState<Bounds>();
   const [layerId, setLayerId] = useState<string>();
 
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>();
@@ -75,6 +84,18 @@ export const Map = () => {
   });
   const { data: stops } = api.static.getStops.useQuery();
   const { data: lines } = api.static.lines.useQuery();
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const bounds = mapRef.current.getBounds();
+    setBounds({
+      west: bounds.getWest(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      north: bounds.getNorth(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewState, mapRef.current]);
 
   return (
     <MapContext.Provider
@@ -89,6 +110,7 @@ export const Map = () => {
         lines,
         isOnDrag,
         isOnMove,
+        bounds,
       }}
     >
       <MapGl
@@ -100,7 +122,7 @@ export const Map = () => {
         onLoad={() => {
           const layers = mapRef.current?.getStyle().layers;
           const labelLayerId = layers?.find(
-            (layer) => layer.type === "symbol" && layer.layout?.["text-field"],
+            (layer) => layer.type === 'symbol' && layer.layout?.['text-field']
           )?.id;
           setLayerId(labelLayerId);
         }}
@@ -119,42 +141,36 @@ export const Map = () => {
         onMoveEnd={() => {
           setIsOnMove(false);
         }}
-        onMouseDown={() => {
-          setIsOnDrag(true);
-        }}
-        onMouseUp={() => {
-          setIsOnDrag(false);
-        }}
         ref={mapRef}
       >
         <Layer
           id="add-3d-buildings"
           source="composite"
           source-layer="building"
-          filter={["==", "extrude", "true"]}
+          filter={['==', 'extrude', 'true']}
           type="fill-extrusion"
           minzoom={15}
           paint={{
-            "fill-extrusion-color": "#aaa",
-            "fill-extrusion-height": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
               15,
               0,
               15.05,
-              ["get", "height"],
+              ['get', 'height'],
             ],
-            "fill-extrusion-base": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
+            'fill-extrusion-base': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
               15,
               0,
               15.05,
-              ["get", "min_height"],
+              ['get', 'min_height'],
             ],
-            "fill-extrusion-opacity": 0.6,
+            'fill-extrusion-opacity': 0.6,
           }}
           beforeId={layerId}
         />

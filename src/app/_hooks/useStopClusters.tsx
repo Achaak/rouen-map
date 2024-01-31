@@ -1,46 +1,56 @@
-import { useMemo } from "react";
-import { useMap } from "react-map-gl";
-import useSupercluster from "use-supercluster";
-import { useMapContext } from "../_components/Map";
-import { useDebounce } from "usehooks-ts";
+import { useMemo } from 'react';
+import useSupercluster from 'use-supercluster';
+import { useMapContext } from '../_components/Map';
+import type Supercluster from 'supercluster';
+import { type RouterOutput } from '~/server/api/root';
 
 // location_type: 0: Stop, 1: Station, 2: Station Entrance/Exit, 3: Generic Node, 4: Boarding Area
 
 export const useStopClusters = () => {
-  const { viewState, stops } = useMapContext();
-  const { current: mapRef } = useMap();
-  const viewStateDebounce = useDebounce(viewState, 1000);
+  const { viewState, stops, bounds } = useMapContext();
 
-  const filteredStops = useMemo(() => {
-    if (!stops || !mapRef) return [];
-
-    return stops.filter((stop) => {
-      if (!stop.latitude || !stop.longitude) return false;
-
-      // Filter location_type
-      if (stop.locationType !== 0) return false;
-
-      const bounds = mapRef.getBounds();
-      return bounds.contains([stop.longitude, stop.latitude]);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stops, mapRef, viewStateDebounce]);
+  const stopGeoJson = useMemo<
+    Array<
+      Supercluster.PointFeature<
+        RouterOutput['static']['getStops'][number] & {
+          cluster: boolean;
+        }
+      >
+    >
+  >(() => {
+    return (
+      stops
+        // .filter((stop) => {
+        //   return stop.locationType !== 0;
+        // })
+        ?.map((stop) => {
+          return {
+            type: 'Feature',
+            properties: {
+              cluster: false,
+              ...stop,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [stop.longitude, stop.latitude],
+            },
+          };
+        }) ?? []
+    );
+  }, [stops]);
 
   const { clusters: stopClusters } = useSupercluster({
-    points: filteredStops.map((stop) => ({
-      type: "Feature",
-      properties: {
-        cluster: false,
-        ...stop,
-      },
-      geometry: {
-        type: "Point",
-        coordinates: [stop.longitude, stop.latitude],
-      },
-    })),
-    bounds: [-180, -85, 180, 85],
+    points: stopGeoJson,
+    bounds: bounds
+      ? [
+          bounds.west ?? 0,
+          bounds.south ?? 0,
+          bounds.east ?? 0,
+          bounds.north ?? 0,
+        ]
+      : undefined,
     zoom: viewState.zoom,
-    options: { radius: 100, maxZoom: 16 },
+    options: { radius: 125, maxZoom: 16 },
   });
 
   return {
