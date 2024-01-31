@@ -15,6 +15,7 @@ const description =
 const appName = 'Rouen transport';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://rouen-transport.vercel.app'),
   title,
   description,
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
